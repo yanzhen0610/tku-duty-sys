@@ -1,6 +1,16 @@
 <template>
     <tr>
-        <th><a :href="row.show_url">{{ row.key }}</a></th>
+        <th>
+            <input v-if="created"
+                class="input"
+                type="text"
+                v-model="copiedRowData[primary_key]"
+                required
+            >
+            <a v-else
+                v-bind:href="row.show_url"
+            >{{ row.key }}</a>
+        </th>
         <td v-for="(type, key) in fields"
             v-bind:key="key"
         >
@@ -14,7 +24,7 @@
             <span v-else
             >{{ row[key] }}</span>
         </td>
-        <td v-if="editable && row.update_url">
+        <td v-if="editable && (row.created || row.update_url)">
             <a class="button is-success"
                 v-bind:class="{ 'is-loading': updating }"
                 v-bind:disabled="!canSave"
@@ -52,15 +62,23 @@
                 'i18n',
                 'fields',
                 'editable',
+                'create_url',
+                'primary_key',
             ]),
             changed() {
-                for (const key in this.$store.getters.fields)
+                for (const key in this.$store.getters.fields) {
+                    if (this.copiedRowData[key] === '')
+                        this.copiedRowData[key] = null;
                     if (this.copiedRowData[key] != this.row[key])
                         return true;
-                return false;
+                }
+                return this.row.created && this.copiedRowData[this.$store.getters.primary_key];
             },
             canSave() {
                 return !this.updating && this.changed;
+            },
+            created() {
+                return this.row.created === true;
             },
         },
         methods: {
@@ -71,21 +89,33 @@
                     const request = new XMLHttpRequest();
                     request.onreadystatechange = function() {
                         if (this.readyState === 4) {
-                            outer.updating = false;
                             if (this.status === 200) {
-                                Object.assign(outer.row, outer.copiedRowData);
+                                if (outer.row.created) {
+                                    outer.row.created = false;
+                                    delete outer.row.created;
+                                    const primary_key = outer.$store.getters.primary_key;
+                                    outer.row.key = outer.copiedRowData[primary_key];
+                                    delete outer.copiedRowData[primary_key];
+                                }
+                                Object.assign(outer.row, JSON.parse(this.responseText));
+                                for (const key in outer.$store.getters.fields)
+                                    outer.copiedRowData[key] = outer.row[key];
                             }
+                            outer.updating = false;
                         }
-                    }
-                    request.open('POST', this.row.update_url, true);
+                    };
+                    request.open('POST', this.row.created ? this.$store.getters.create_url : this.row.update_url, true);
                     request.setRequestHeader('Content-Type', 'application/json');
+                    for (const field in this.$store.getters.fields)
+                        if (this.$store.getters.fields[field] == 'text' && !this.copiedRowData[field])
+                            this.copiedRowData[field] = null;
                     request.send(JSON.stringify({
-                        _method: 'PATCH',
+                        _method: this.row.created ? 'POST' : 'PATCH',
                         _token: document.querySelector("meta[name='csrf-token']").getAttribute('content'),
                         ...this.copiedRowData,
                     }));
                 }
-            }
+            },
         },
     }
 </script>

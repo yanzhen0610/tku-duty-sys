@@ -43,8 +43,14 @@ window.make_edit_table = function (el, data) {
             rows: (state) => state.data.rows,
             fields: (state) => state.data.fields,
             editable: (state) => state.data.editable,
+            create_url: (state) => state.data.create_url,
             primary_key: (state) => state.data.primary_key,
-        }
+        },
+        mutations: {
+            createNewRow(state) {
+                state.data.rows.push({created: true});
+            }
+        },
     });
     return new Vue({
         el: el,
