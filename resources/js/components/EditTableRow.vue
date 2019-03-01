@@ -1,28 +1,40 @@
 <template>
     <tr>
         <th>
-            <input v-if="created"
-                class="input"
-                type="text"
-                v-model="copiedRowData[primary_key]"
-                required
-            >
-            <a v-else
+            <div v-if="row.created">
+                <input
+                    v-model="copiedRowData[primary_key]"
+                    v-bind:class="{ 'is-danger': errors[primary_key] }"
+                    class="input"
+                    type="text"
+                    required
+                >
+                <p class="help is-danger"
+                    v-for="error in errors[primary_key]"
+                    v-bind:key="error"
+                >{{ error }}</p>
+            </div>
+            <a v-else-if="row.show_url"
                 v-bind:href="row.show_url"
             >{{ row.key }}</a>
+            <span v-else>{{ row.key }}</span>
         </th>
         <td v-for="(type, key) in fields"
             v-bind:key="key"
         >
-            <input
-                v-if="editable || type == 'checkbox'"
-                v-model="copiedRowData[key]"
-                v-bind:type="type"
-                v-bind:class="{ input: type == 'text' }"
-                v-bind:disabled="!editable"
-            >
-            <span v-else
-            >{{ row[key] }}</span>
+            <div v-if="editable || type == 'checkbox'">
+                <input
+                    v-model="copiedRowData[key]"
+                    v-bind:type="type"
+                    v-bind:class="{ input: type == 'text', 'is-danger': errors[key] }"
+                    v-bind:disabled="!editable"
+                >
+                <p class="help is-danger"
+                    v-for="error in errors[key]"
+                    v-bind:key="error"
+                >{{ error }}</p>
+            </div>
+            <span v-else>{{ row[key] }}</span>
         </td>
         <td v-if="editable && (row.created || row.update_url)">
             <a class="button is-success"
@@ -54,7 +66,10 @@
                 copiedRowData[key] = this.row[key];
             return {
                 copiedRowData,
+                canSave: false,
+                changed: false,
                 updating: false,
+                errors: {},
             };
         },
         computed: {
@@ -65,20 +80,29 @@
                 'create_url',
                 'primary_key',
             ]),
+            fields() {
+                return this.$store.getters.fields;
+            },
+        },
+        watch: {
+            copiedRowData: {
+                handler() {
+                    this.emptyStringToNull();
+                    this.updateChanged();
+                },
+                deep: true,
+            },
+            row: {
+                handler() {
+                    this.updateChanged();
+                },
+                deep: true,
+            },
             changed() {
-                for (const key in this.$store.getters.fields) {
-                    if (this.copiedRowData[key] === '')
-                        this.copiedRowData[key] = null;
-                    if (this.copiedRowData[key] != this.row[key])
-                        return true;
-                }
-                return this.row.created && this.copiedRowData[this.$store.getters.primary_key];
+                this.updateCanSave();
             },
-            canSave() {
-                return !this.updating && this.changed;
-            },
-            created() {
-                return this.row.created === true;
+            updating() {
+                this.updateCanSave();
             },
         },
         methods: {
@@ -86,35 +110,56 @@
                 if (this.canSave) {
                     this.updating = true;
                     const outer = this;
+                    const primary_key = this.$store.getters.primary_key;
+                    const url = this.row.created ? this.$store.getters.create_url : this.row.update_url;
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    const _method = this.row.created ? 'POST' : 'PATCH';
                     const request = new XMLHttpRequest();
+
                     request.onreadystatechange = function() {
-                        if (this.readyState === 4) {
-                            if (this.status === 200) {
-                                if (outer.row.created) {
-                                    outer.row.created = false;
-                                    delete outer.row.created;
-                                    const primary_key = outer.$store.getters.primary_key;
-                                    outer.row.key = outer.copiedRowData[primary_key];
-                                    delete outer.copiedRowData[primary_key];
+                        if (this.readyState == 4) {
+                            try {
+                                const response = JSON.parse(this.responseText);
+                                outer.errors = {};
+                                if (this.status == 200 && this.responseURL == url) {
+                                    if (outer.row.created) {
+                                        delete outer.row.created;
+                                        outer.row.key = outer.copiedRowData[primary_key];
+                                        delete outer.copiedRowData[primary_key];
+                                    }
+                                    Object.assign(outer.row, response);
+                                    outer.updateChanged();
+                                    for (const key in outer.fields)
+                                        outer.copiedRowData[key] = outer.row[key];
+                                } else if (this.status == 400) {
+                                    outer.errors = response;
                                 }
-                                Object.assign(outer.row, JSON.parse(this.responseText));
-                                for (const key in outer.$store.getters.fields)
-                                    outer.copiedRowData[key] = outer.row[key];
-                            }
+                            } catch(e) {}
                             outer.updating = false;
                         }
                     };
-                    request.open('POST', this.row.created ? this.$store.getters.create_url : this.row.update_url, true);
+                    request.open('POST', url, true);
                     request.setRequestHeader('Content-Type', 'application/json');
-                    for (const field in this.$store.getters.fields)
-                        if (this.$store.getters.fields[field] == 'text' && !this.copiedRowData[field])
-                            this.copiedRowData[field] = null;
                     request.send(JSON.stringify({
-                        _method: this.row.created ? 'POST' : 'PATCH',
-                        _token: document.querySelector("meta[name='csrf-token']").getAttribute('content'),
+                        _method: _method,
+                        _token: csrfToken,
                         ...this.copiedRowData,
                     }));
                 }
+            },
+            emptyStringToNull() {
+                for (const field in this.fields)
+                    if (this.fields[field] == 'text' && this.copiedRowData[field] === '')
+                        this.copiedRowData[field] = null;
+            },
+            updateChanged() {
+                for (const key in this.fields)
+                    if (this.copiedRowData[key] != this.row[key])
+                        return this.changed = true;
+                this.changed = this.row.created && this.copiedRowData[this.$store.getters.primary_key];
+            },
+            updateCanSave() {
+                this.canSave = !this.updating && this.changed;
             },
         },
     }
