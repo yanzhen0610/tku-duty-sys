@@ -23,7 +23,13 @@
             v-bind:key="key"
         >
             <div v-if="editable || type == 'checkbox'">
-                <input
+                <span v-if="type == 'button-link'">
+                    <a v-if="row[key]"
+                        class="button is-primary"
+                        @click="ajax(row[key].method, row[key].url)"
+                    >{{ i18n[key] }}</a>
+                </span>
+                <input v-else
                     v-model="copiedRowData[key]"
                     v-bind:type="type"
                     v-bind:class="{ input: type == 'text', 'is-danger': errors[key] }"
@@ -106,6 +112,16 @@
             },
         },
         methods: {
+            ajax(_method, url) {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const request = new XMLHttpRequest();
+                request.open('POST', url, true);
+                request.setRequestHeader('Content-Type', 'application/json');
+                request.send(JSON.stringify({
+                    _method,
+                    _token: csrfToken,
+                }));
+            },
             save() {
                 if (this.canSave) {
                     this.updating = true;
@@ -127,8 +143,7 @@
                                         outer.row.key = outer.copiedRowData[primary_key];
                                         delete outer.copiedRowData[primary_key];
                                     }
-                                    Object.assign(outer.row, response);
-                                    outer.updateChanged();
+                                    outer.row = Object.assign(outer.row, response);
                                     for (const key in outer.fields)
                                         outer.copiedRowData[key] = outer.row[key];
                                 } else if (this.status == 400) {
