@@ -1,6 +1,6 @@
-<nav class="navbar" role="navigation" aria-label="main navigation">
+<nav class="navbar is-transparent" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-        <a class="navbar-item" href="https://bulma.io">
+        <a class="navbar-item" href="{{ route('home') }}">
             <img src="https://photo.tku.edu.tw/getjpg.cshtml?im=4BF6E0F0441D74FA54F7801CBC27726D8EED46780AC64A531821B52AFA2CB4758592FECE924320F2B27AE0489CC89B1E95BBAF3CECE0C7CB" width="28" height="28">
         </a>
 
@@ -36,12 +36,12 @@
         </div>
         @else
         <div class="navbar-end">
-            <div class="navbar-item has-dropdown" onclick="this.classList.toggle('is-active')">
+            <div class="navbar-item has-dropdown is-hoverable" onclick="this.classList.toggle('is-active')">
                 <a class="navbar-link">
                     {{ Auth::user()->display_name ?? Auth::user()->username }}
                 </a>
         
-                <div class="navbar-dropdown is-right">
+                <div class="navbar-dropdown is-right is-boxed">
                     <a class="navbar-item" href="{{ route('users.show', Auth::user()->username) }}">
                         @lang('ui.user')({{ Auth::user()->username }})
                     </a>
