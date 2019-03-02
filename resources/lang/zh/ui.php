@@ -5,7 +5,7 @@ return [
     'logout' => '登出',
     'register' => '註冊',
     'home' => '首頁',
-    'user' => '帳戶',
+    'user' => '帳號',
     'users' => '所有人員',
     'duty' => '職務',
     'building' => '大樓',
