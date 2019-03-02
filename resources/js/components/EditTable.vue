@@ -22,8 +22,8 @@
             </tr>
         </tfoot>
         <edit-table-row
-            v-for="row in rows"
-            v-bind:key="row.key"
+            v-for="(row, index) in rows"
+            v-bind:key="index"
             v-bind:row="row"
         ></edit-table-row>
     </table>

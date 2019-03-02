@@ -22,24 +22,34 @@
         <td v-for="(type, key) in fields"
             v-bind:key="key"
         >
-            <div v-if="editable || type == 'checkbox'">
+            <div v-if="editable || type == 'button-link'">
                 <span v-if="type == 'button-link'">
                     <a v-if="row[key]"
                         class="button is-primary"
                         @click="ajax(row[key].method, row[key].url)"
                     >{{ i18n[key] }}</a>
                 </span>
+                <check-box v-else-if="type == 'checkbox'"
+                    v-bind:keyName="key"
+                    v-bind:value="copiedRowData[key]"
+                    @update-value="updateValue"
+                >
+                </check-box>
                 <input v-else
                     v-model="copiedRowData[key]"
                     v-bind:type="type"
                     v-bind:class="{ input: type == 'text', 'is-danger': errors[key] }"
-                    v-bind:disabled="!editable"
                 >
                 <p class="help is-danger"
                     v-for="error in errors[key]"
                     v-bind:key="error"
                 >{{ error }}</p>
             </div>
+            <check-box v-else-if="type == 'checkbox'"
+                v-bind:keyName="key"
+                v-bind:value="copiedRowData[key]"
+            >
+            </check-box>
             <span v-else>{{ row[key] }}</span>
         </td>
         <td v-if="editable && (row.created || row.update_url)">
@@ -57,6 +67,7 @@
 </template>
 
 <script>
+    import EditTableCheckBox from './EditTableCheckBox.vue';
     import { mapGetters } from 'vuex';
 
     export default {
@@ -65,6 +76,9 @@
                 type: Object,
                 required: true,
             },
+        },
+        components: {
+            'check-box': EditTableCheckBox,
         },
         data() {
             var copiedRowData = {};
@@ -112,6 +126,9 @@
             },
         },
         methods: {
+            updateValue(key, value) {
+                this.copiedRowData[key] = value;
+            },
             ajax(_method, url) {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 const request = new XMLHttpRequest();
