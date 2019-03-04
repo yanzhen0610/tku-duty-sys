@@ -23,4 +23,6 @@ return [
     'mobile_ext' => '手機/分機',
     'create' => '新增',
     'reset_password' => '重置密碼',
+    'group_name' => '群組',
+    'delete' => '刪除',
 ];

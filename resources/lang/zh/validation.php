@@ -148,6 +148,7 @@ return [
         'username' => '帳號',
         'display_name' => '名稱',
         'mobile_ext' => '手機/分機',
+        'group_name' => '群組名稱',
     ],
 
 ];
