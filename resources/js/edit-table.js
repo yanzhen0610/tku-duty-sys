@@ -37,7 +37,7 @@ window.make_edit_table = function (el, data) {
     const store = new Vuex.Store({
         state: {
             ...data,
-            rowsId: data.rows.length,
+            rowsLastId: data.rows.length,
         },
         getters: {
             i18n: (state) => state.ui_i18n,
@@ -50,7 +50,7 @@ window.make_edit_table = function (el, data) {
         },
         mutations: {
             createNewRow(state) {
-                state.rows.push({editTableRowIndex: state.rowsId++, key: undefined, created: true});
+                state.rows.push({editTableRowIndex: state.rowsLastId++, key: undefined, created: true});
             },
             removeRow(state, index) {
                 delete state.rows.splice(index, 1);
