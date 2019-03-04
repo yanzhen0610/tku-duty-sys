@@ -9,6 +9,8 @@
                 >{{ i18n[key] }}</th>
                 <th v-if="editable"
                 >{{ i18n['save'] }}</th>
+                <th v-if="destroyable"
+                >{{ i18n['delete'] }}</th>
             </tr>
         </thead>
         <tfoot>
@@ -19,12 +21,15 @@
                 >{{ i18n[key] }}</th>
                 <th v-if="editable"
                 >{{ i18n['save'] }}</th>
+                <th v-if="destroyable"
+                >{{ i18n['delete'] }}</th>
             </tr>
         </tfoot>
         <edit-table-row
-            v-for="(row, index) in rows"
-            v-bind:key="index"
-            v-bind:row="row"
+            v-for="(rowData, index) in rows"
+            v-bind:key="rowData.editTableRowIndex"
+            v-bind:rowKey="index"
+            v-bind:rowData="rowData"
         ></edit-table-row>
     </table>
 
@@ -54,6 +59,7 @@
             'rows',
             'fields',
             'editable',
+            'destroyable',
             'create_url',
             'primary_key',
         ]),

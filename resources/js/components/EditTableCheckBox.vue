@@ -19,7 +19,6 @@
         props: {
             value: {
                 type: Boolean,
-                required: true,
             },
             keyName: {
                 required: true,
@@ -41,6 +40,9 @@
             },
         },
         watch: {
+            value() {
+                this.copiedValue = this.value;
+            },
             copiedValue() {
                 this.updateValue();
             },

@@ -33,23 +33,28 @@ Vue.component('edit-table', require('./components/EditTable.vue').default);
  */
 
 window.make_edit_table = function (el, data) {
+    data.rows.forEach((v, i) => v.editTableRowIndex = i);
     const store = new Vuex.Store({
         state: {
-            'data': data,
+            ...data,
+            rowsId: data.rows.length,
         },
         getters: {
-            data: (state) => state.data,
-            i18n: (state) => state.data.ui_i18n,
-            rows: (state) => state.data.rows,
-            fields: (state) => state.data.fields,
-            editable: (state) => state.data.editable,
-            create_url: (state) => state.data.create_url,
-            primary_key: (state) => state.data.primary_key,
+            i18n: (state) => state.ui_i18n,
+            rows: (state) => state.rows,
+            fields: (state) => state.fields,
+            editable: (state) => state.editable,
+            destroyable: (state) => state.destroyable,
+            create_url: (state) => state.create_url,
+            primary_key: (state) => state.primary_key,
         },
         mutations: {
             createNewRow(state) {
-                state.data.rows.push({created: true});
-            }
+                state.rows.push({editTableRowIndex: state.rowsId++, key: undefined, created: true});
+            },
+            removeRow(state, index) {
+                delete state.rows.splice(index, 1);
+            },
         },
     });
     return new Vue({
