@@ -15,18 +15,17 @@ class CreateUsersGroupsTable extends Migration
     public function up()
     {
         Schema::create('users_groups', function (Blueprint $table) {
-            $table->increments('id');
+            $table->bigIncrements('id')->index();
 
-            $table->unsignedInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->bigInteger('user_id')->unsigned()->index();
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade')->onUpdate('cascade');
             
-            $table->unsignedInteger('group_id');
-            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
+            $table->bigInteger('group_id')->unsigned()->index();
+            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade')->onUpdate('cascade');
             
             $table->timestamps();
             
             $table->unique(['user_id', 'group_id']);
-            $table->index(['id', 'user_id', 'group_id']);
         });
 
         DB::table('users_groups')->insert([
