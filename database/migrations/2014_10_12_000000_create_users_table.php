@@ -20,7 +20,7 @@ class CreateUsersTable extends Migration
             $table->string('username')->unique()->index();
             $table->string('display_name')->nullable();
             $table->string('password');
-            $table->integer('status');
+            $table->integer('status')->default(0);
             $table->string('email')->unique()->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('mobile_ext')->nullable();
