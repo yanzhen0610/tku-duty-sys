@@ -17,10 +17,12 @@ class CreateLogsTable extends Migration
             $table->bigIncrements('id')->index();
 
             $table->unsignedInteger('level')->index();
-            $table->foreign('level')->references('id')->on('log_levels')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('level')->references('id')->on('log_levels')
+                ->onDelete('restrict')->onUpdate('cascade');
 
             $table->unsignedInteger('tag')->index();
-            $table->foreign('tag')->references('id')->on('log_tags')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('tag')->references('id')->on('log_tags')
+                ->onDelete('restrict')->onUpdate('cascade');
 
             $table->text('message');
 
