@@ -18,5 +18,6 @@ return [
     'sent' => 'We have e-mailed your password reset link!',
     'token' => 'This password reset token is invalid.',
     'user' => "We can't find a user with that e-mail address.",
+    'reset_request_send_to_admin' => '已向管理員傳送密碼重置請求。',
 
 ];

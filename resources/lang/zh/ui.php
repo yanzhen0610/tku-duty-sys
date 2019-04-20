@@ -25,4 +25,5 @@ return [
     'reset_password' => '重置密碼',
     'group_name' => '群組',
     'delete' => '刪除',
+    'send_reset_password_request' => '傳送重置密碼請求',
 ];
