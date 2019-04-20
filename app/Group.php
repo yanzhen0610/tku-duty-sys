@@ -24,7 +24,8 @@ class Group extends Model
         return 'group_name';
     }
 
-    public function users() {
+    public function users()
+    {
         return $this->belongsToMany('\App\User', 'users_groups', 'group_id', 'user_id');
     }
 }
