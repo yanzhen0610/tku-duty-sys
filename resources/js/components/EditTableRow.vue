@@ -25,8 +25,10 @@
             <div v-if="editable || type == 'button-link'">
                 <span v-if="type == 'button-link'">
                     <a v-if="rowData[key]"
+                        v-bind:disabled="!rowData[key].url"
+                        v-bind:class="{ 'is-loading': rowData[key].isLoading }"
                         class="button is-primary"
-                        @click="ajax(rowData[key].method, rowData[key].url)"
+                        @click="visitButtonLink(rowData[key])"
                     >{{ i18n[key] }}</a>
                 </span>
                 <check-box v-else-if="type == 'checkbox'"
@@ -199,18 +201,44 @@
                                         outer.rowData.key = outer.copiedRowData[primary_key];
                                         outer.$delete(outer.copiedRowData, primary_key);
                                     }
-                                    outer.rowData = Object.assign(outer.rowData, response);
-                                    for (const key in outer.fields)
-                                        outer.$set(outer.copiedRowData, key, outer.rowData[key]);
-                                    this.updateChanged();
+                                    outer.updateRow(response);
                                 } else if (this.status == 400) {
                                     outer.errors = response;
                                 }
-                            } catch(e) {}
+                            } catch (e) {}
                             outer.updating = false;
                         }
                     };
                     this.ajax(method, url, handler, this.copiedRowData);
+                }
+            },
+            updateRow(newRowData) {
+                this.rowData = Object.assign(this.rowData, newRowData);
+                for (const key in this.fields)
+                    this.$set(this.copiedRowData, key, this.rowData[key]);
+                this.updateChanged()
+            },
+            visitButtonLink(buttonLinkData) {
+                if (buttonLinkData.url && !buttonLinkData.isLoading) {
+                    buttonLinkData.isLoading = true;
+                    const outer = this;
+                    const handler = function() {
+                        if (this.readyState == 4) {
+                            if (this.status == 200 && this.responseURL == buttonLinkData.url) {
+                                try {
+                                    const response = JSON.parse(this.responseText);
+                                    outer.updateRow(response);
+                                } catch (e) {}
+                            }
+                            buttonLinkData.isLoading = false;
+                        }
+                    };
+
+                    this.ajax(
+                        buttonLinkData.method,
+                        buttonLinkData.url,
+                        handler
+                    )
                 }
             },
             emptyStringToNull() {
@@ -223,7 +251,7 @@
                     if (this.copiedRowData[key] != this.rowData[key])
                         return this.changed = true;
                 this.changed = this.rowData.created && this.copiedRowData[this.$store.getters.primary_key];
-            }
+            },
         },
     }
 </script>
