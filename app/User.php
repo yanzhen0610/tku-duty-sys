@@ -42,25 +42,33 @@ class User extends Authenticatable
      */
     protected $appends = ['is_admin', 'is_disabled'];
 
-    public function getIsAdminAttribute() {
+    public static $STATUS_NORMAL = 0;
+    public static $STATUS_RESET_PASSWORD_REQUESTED = 5;
+
+    public function getIsAdminAttribute()
+    {
         return $this->isAdmin();
     }
 
-    public function setIsAdminAttribute($value) {
+    public function setIsAdminAttribute($value)
+    {
         if ($value === true) $this->entitleAdmin();
         else if ($value === false) $this->revokeAdmin();
     }
 
-    public function getIsDisabledAttribute() {
+    public function getIsDisabledAttribute()
+    {
         return $this->isDisabled();
     }
 
-    public function setIsDisabledAttribute($value) {
+    public function setIsDisabledAttribute($value)
+    {
         if ($value === true) $this->disable();
         else if ($value === false) $this->enable();
     }
 
-    public function groups() {
+    public function groups()
+    {
         return $this->belongsToMany('\App\Group', 'users_groups', 'user_id', 'group_id');
     }
 
@@ -82,7 +90,8 @@ class User extends Authenticatable
     public function entitleAdmin()
     {
         if ($this->username == 'admin') return;
-        try {
+        try
+        {
             $this->groups()->save(Group::where('group_name', 'admin')->first());
         } catch (QueryException $e) {}
     }
@@ -90,7 +99,8 @@ class User extends Authenticatable
     public function revokeAdmin()
     {
         if ($this->username == 'admin') return;
-        try {
+        try
+        {
             $this->groups()->detach(Group::where('group_name', 'admin')->first());
         } catch (QueryException $e) {}
     }
@@ -103,7 +113,8 @@ class User extends Authenticatable
     public function disable()
     {
         if ($this->username == 'admin') return;
-        try {
+        try
+        {
             $this->groups()->save(Group::where('group_name', 'disabled')->first());
         } catch (QueryException $e) {}
     }
@@ -111,8 +122,10 @@ class User extends Authenticatable
     public function enable()
     {
         if ($this->username == 'admin') return;
-        try {
+        try
+        {
             $this->groups()->detach(Group::where('group_name', 'disabled')->first());
         } catch (QueryException $e) {}
     }
+
 }
