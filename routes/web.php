@@ -12,5 +12,15 @@
 */
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('index');
+})->name('home');
+
+Route::resource('users', 'UsersController')->only(['index', 'store', 'update']);
+Route::delete('users/{user}/password', 'UsersController@resetPassword')->name('users.password.reset');
+Route::resource('groups', 'GroupsController')->only(['store', 'update', 'destroy']);
+
+Auth::routes(['register' => false, 'reset' => false, 'verify' => false]);
+Route::group([], function() {
+    Route::get('password/reset', 'Auth\ForgotPasswordController@showRequestResetForm')->name('password.requestResetForm');
+    Route::post('password/reset', 'Auth\ForgotPasswordController@requestReset')->name('password.requestReset');
 });
