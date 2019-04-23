@@ -14,7 +14,7 @@ class CreateUsersActionTokensActionTypesTable extends Migration
     public function up()
     {
         Schema::create('users_action_tokens_action_types', function (Blueprint $table) {
-            $table->increments('id')->index();
+            $table->bigIncrements('id')->index();
             $table->string('action_name')->index();
             $table->timestamps();
         });

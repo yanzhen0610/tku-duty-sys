@@ -16,11 +16,11 @@ class CreateLogsTable extends Migration
         Schema::create('logs', function (Blueprint $table) {
             $table->bigIncrements('id')->index();
 
-            $table->unsignedInteger('level')->index();
+            $table->bigInteger('level')->unsigned()->index();
             $table->foreign('level')->references('id')->on('log_levels')
                 ->onDelete('restrict')->onUpdate('cascade');
 
-            $table->unsignedInteger('tag')->index();
+            $table->bigInteger('tag')->unsigned()->index();
             $table->foreign('tag')->references('id')->on('log_tags')
                 ->onDelete('restrict')->onUpdate('cascade');
 

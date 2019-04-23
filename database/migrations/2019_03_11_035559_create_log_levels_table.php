@@ -15,7 +15,7 @@ class CreateLogLevelsTable extends Migration
     public function up()
     {
         Schema::create('log_levels', function (Blueprint $table) {
-            $table->increments('id')->index();
+            $table->bigIncrements('id')->index();
 
             $table->string('level_name')->index();
             $table->integer('level')->index();

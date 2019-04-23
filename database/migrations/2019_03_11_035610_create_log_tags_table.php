@@ -14,7 +14,7 @@ class CreateLogTagsTable extends Migration
     public function up()
     {
         Schema::create('log_tags', function (Blueprint $table) {
-            $table->increments('id')->index();
+            $table->bigIncrements('id')->index();
             $table->string('tag_name')->index();
         });
     }

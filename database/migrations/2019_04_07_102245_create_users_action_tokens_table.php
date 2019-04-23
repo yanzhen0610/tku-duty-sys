@@ -16,7 +16,7 @@ class CreateUsersActionTokensTable extends Migration
         Schema::create('users_action_tokens', function (Blueprint $table) {
             $table->bigIncrements('id')->index();
 
-            $table->unsignedInteger('action')->index();
+            $table->bigInteger('action')->unsigned()->index();
             $table->foreign('action')->references('id')
                 ->on('users_action_tokens_action_types')
                 ->onDelete('restrict')->onUpdate('cascade');
