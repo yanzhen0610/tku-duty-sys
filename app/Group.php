@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 
 class Group extends Model
@@ -12,6 +13,7 @@ class Group extends Model
      * @var array
      */
     protected $fillable = [
+        'uuid',
         'group_name',
     ];
 
@@ -19,9 +21,18 @@ class Group extends Model
         'id',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function(Group $group) {
+            $group->uuid = Str::uuid()->toString();
+        });
+    }
+
     public function getRouteKeyName()
     {
-        return 'group_name';
+        return 'uuid';
     }
 
     public function users()

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Group;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Validator;
 
@@ -26,8 +27,8 @@ class GroupsController extends Controller
             if ($value != 'button-link')
                 $arr[$key] = $group->$key;
         if (Auth::user()->is_admin) {
-            $arr['update_url'] = route('groups.update', $group['group_name']);
-            $arr['destroy_url'] = route('groups.destroy', $group['group_name']);
+            $arr['update_url'] = route('groups.update', $group->uuid);
+            $arr['destroy_url'] = route('groups.destroy', $group->uuid);
         }
         $arr['key'] = $group->group_name;
         return $arr;
@@ -84,7 +85,6 @@ class GroupsController extends Controller
             return response()->json($validator->messages(), 400);
 
         $group = Group::create($request->only(['group_name']));
-        $group->save();
 
         return static::groupFilterOutFields($group);
     }
