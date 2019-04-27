@@ -15,7 +15,7 @@ Route::get('/', function () {
     return view('index');
 })->name('home');
 
-Route::resource('users', 'UsersController')->only(['index', 'store', 'update']);
+Route::resource('users', 'UsersController')->only(['index', 'show', 'store', 'update']);
 Route::delete('users/{user}/password', 'UsersController@resetPassword')->name('users.password.reset');
 Route::resource('groups', 'GroupsController')->only(['store', 'update', 'destroy']);
 
