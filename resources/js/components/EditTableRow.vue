@@ -19,39 +19,38 @@
             >{{ rowData.key }}</a>
             <span v-else>{{ rowData.key }}</span>
         </th>
-        <td v-for="(type, key) in fields"
+        <td v-for="(fieldData, key) in fields"
             v-bind:key="key"
         >
-            <div v-if="editable || type == 'button-link'">
-                <span v-if="type == 'button-link'">
-                    <a v-if="rowData[key]"
-                        v-bind:disabled="!rowData[key].url"
-                        v-bind:class="{ 'is-loading': rowData[key].isLoading }"
-                        class="button is-primary"
-                        @click="visitButtonLink(rowData[key])"
-                    >{{ i18n[key] }}</a>
-                </span>
-                <check-box v-else-if="type == 'checkbox'"
-                    v-bind:keyName="key"
-                    v-bind:value="copiedRowData[key]"
-                    @update-value="updateValue"
-                >
-                </check-box>
-                <input v-else
+            <button-link v-if="fieldData.type == 'button-link'"
+                v-bind:keyName="key"
+                v-bind:value="copiedRowData[key]"
+                @update-row="updateRow"
+            >
+            </button-link>
+            <check-box v-else-if="fieldData.type == 'checkbox'"
+                v-bind:keyName="key"
+                v-bind:value="copiedRowData[key]"
+                @update-value="updateValue"
+            >
+            </check-box>
+            <dropdown v-else-if="fieldData.type == 'dropdown'"
+                v-bind:keyName="key"
+                v-bind:value="copiedRowData[key]"
+                @update-value="updateValue"
+            >
+            </dropdown>
+            <div v-else-if="editable">
+                <input
                     v-model="copiedRowData[key]"
-                    v-bind:type="type"
-                    v-bind:class="{ input: type == 'text', 'is-danger': errors[key] }"
+                    v-bind:type="fieldData.type"
+                    v-bind:class="{ input: fieldData.type == 'text', 'is-danger': errors[key] }"
                 >
                 <p class="help is-danger"
                     v-for="error in errors[key]"
                     v-bind:key="error"
                 >{{ error }}</p>
             </div>
-            <check-box v-else-if="type == 'checkbox'"
-                v-bind:keyName="key"
-                v-bind:value="copiedRowData[key]"
-            >
-            </check-box>
             <span v-else>{{ rowData[key] }}</span>
         </td>
         <td v-if="editable && (rowData.created || rowData.update_url)">
@@ -82,7 +81,11 @@
 </template>
 
 <script>
+    import { object_compare } from '../utils.js';
+
+    import EditTableButtonLink from './EditTableButtonLink.vue';
     import EditTableCheckBox from './EditTableCheckBox.vue';
+    import EditTableDropdown from './EditTableDropdown.vue';
     import { mapGetters, mapMutations } from 'vuex';
 
     export default {
@@ -97,7 +100,9 @@
             },
         },
         components: {
+            'button-link': EditTableButtonLink,
             'check-box': EditTableCheckBox,
+            'dropdown': EditTableDropdown,
         },
         data() {
             var copiedRowData = {};
@@ -124,7 +129,8 @@
                 return this.$store.getters.fields;
             },
             canSave() {
-                return !this.updating && !this.destroying && this.changed;
+                return !this.updating && !this.destroying &&
+                    (this.changed || this.rowData.created);
             },
             canDestroy() {
                 return !this.updating && !this.destroying;
@@ -146,21 +152,11 @@
             removeThis() {
                 this.$store.commit('removeRow', this.rowKey);
             },
-            updateValue(key, value, handler) {
-                this.copiedRowData[key] = value;
+            updateValue(key, value) {
+                this.$set(this.copiedRowData, key, value);
             },
             ajax(_method, url, handler, args) {
-                const _token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                const request = new XMLHttpRequest();
-
-                request.onreadystatechange = handler;
-                request.open('POST', url, true);
-                request.setRequestHeader('Content-Type', 'application/json');
-                request.send(JSON.stringify({
-                    _method,
-                    _token,
-                    ...args,
-                }));
+                this.$store.state.ajax(_method, url, handler, args);
             },
             destroy() {
                 if (this.canDestroy) {
@@ -218,39 +214,16 @@
                     this.$set(this.copiedRowData, key, this.rowData[key]);
                 this.updateChanged()
             },
-            visitButtonLink(buttonLinkData) {
-                if (buttonLinkData.url && !buttonLinkData.isLoading) {
-                    buttonLinkData.isLoading = true;
-                    const outer = this;
-                    const handler = function() {
-                        if (this.readyState == 4) {
-                            if (this.status == 200 && this.responseURL == buttonLinkData.url) {
-                                try {
-                                    const response = JSON.parse(this.responseText);
-                                    outer.updateRow(response);
-                                } catch (e) {}
-                            }
-                            buttonLinkData.isLoading = false;
-                        }
-                    };
-
-                    this.ajax(
-                        buttonLinkData.method,
-                        buttonLinkData.url,
-                        handler
-                    )
-                }
-            },
             emptyStringToNull() {
                 for (const field in this.fields)
-                    if (this.fields[field] == 'text' && this.copiedRowData[field] === '')
+                    if (this.fields[field].type == 'text' && this.copiedRowData[field] === '')
                         this.copiedRowData[field] = null;
             },
             updateChanged() {
                 for (const key in this.fields)
-                    if (this.copiedRowData[key] != this.rowData[key])
+                    if (!object_compare(this.copiedRowData[key], this.rowData[key]))
                         return this.changed = true;
-                this.changed = this.rowData.created && this.copiedRowData[this.$store.getters.primary_key];
+                this.changed = false;
             },
         },
     }

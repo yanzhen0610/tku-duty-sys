@@ -38,6 +38,19 @@ window.make_edit_table = function (el, data) {
         state: {
             ...data,
             rowsLastId: data.rows.length,
+            ajax(_method, url, handler, args) {
+                const _token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const request = new XMLHttpRequest();
+
+                request.onreadystatechange = handler;
+                request.open('POST', url, true);
+                request.setRequestHeader('Content-Type', 'application/json');
+                request.send(JSON.stringify({
+                    _method,
+                    _token,
+                    ...args,
+                }));
+            },
         },
         getters: {
             i18n: (state) => state.ui_i18n,
