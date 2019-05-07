@@ -46,12 +46,12 @@
                     v-bind:type="fieldData.type"
                     v-bind:class="{ input: fieldData.type == 'text', 'is-danger': errors[key] }"
                 >
-                <p class="help is-danger"
-                    v-for="error in errors[key]"
-                    v-bind:key="error"
-                >{{ error }}</p>
             </div>
             <span v-else>{{ rowData[key] }}</span>
+            <p class="help is-danger"
+                v-for="error in errors[key]"
+                v-bind:key="error"
+            >{{ error }}</p>
         </td>
         <td v-if="editable && (rowData.created || rowData.update_url)">
             <a class="button is-success"
