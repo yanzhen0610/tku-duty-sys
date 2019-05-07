@@ -17,6 +17,11 @@ class Group extends Model
         'group_name',
     ];
 
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
     protected $hidden = [
         'id',
     ];
