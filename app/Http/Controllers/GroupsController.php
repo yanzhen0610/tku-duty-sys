@@ -13,34 +13,41 @@ class GroupsController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
+        $this->middleware('admin', ['except' => ['index', 'show']]);
     }
 
-    static function groupsFields() {
+    static function groupsFields()
+    {
         if (Auth::user()->is_admin)
-            return ['group_name' => 'text'];
+            return ['group_name' => ['type' => 'text']];
         return [];
     }
 
-    public static function groupFilterOutFields(Group $group) {
-        $arr = array();
+    public static function groupFilterOutFields(Group $group)
+    {
+        $fields = array();
         foreach (static::groupsFields() as $key => $value)
             if ($value != 'button-link')
-                $arr[$key] = $group->$key;
-        if (Auth::user()->is_admin) {
-            $arr['update_url'] = route('groups.update', $group->uuid);
-            $arr['destroy_url'] = route('groups.destroy', $group->uuid);
+                $fields[$key] = $group->$key;
+        if (Auth::user()->is_admin)
+        {
+            $fields['update_url'] = route('groups.update', $group->uuid);
+            $fields['destroy_url'] = route('groups.destroy', $group->uuid);
         }
-        $arr['key'] = $group->group_name;
-        return $arr;
+        $fields['key'] = $group->group_name;
+        return $fields;
     }
 
-    public static function getGroupsData() {
+    static function getGroupsData()
+    {
         $groups_data = [
             'fields' => GroupsController::groupsFields(),
-            'rows' => Group::whereNotIn('group_name', ['admin', 'disabled'])->get()->map([GroupsController::class, 'groupFilterOutFields']),
+            'rows' => Group::whereNotIn('group_name', ['admin', 'disabled'])
+                ->get()->map([GroupsController::class, 'groupFilterOutFields']),
             'primary_key' => 'group_name',
         ];
-        if (Auth::user()->is_admin) {
+        if (Auth::user()->is_admin)
+        {
             $groups_data['editable'] = true;
             $groups_data['create_url'] = route('groups.store');
             $groups_data['destroyable'] = true;
@@ -56,6 +63,7 @@ class GroupsController extends Controller
     public function index()
     {
         //
+        return static::getGroupsData();
     }
 
     /**
@@ -66,6 +74,7 @@ class GroupsController extends Controller
     public function create()
     {
         //
+        abort(404);
     }
 
     /**
@@ -77,9 +86,8 @@ class GroupsController extends Controller
     public function store(Request $request)
     {
         //
-        abort_unless(Auth::user()->is_admin, 403);
         $validator = Validator::make($request->all(), [
-            'group_name' => ['required', 'min:1', 'max:255', 'unique:groups', 'regex:/^[^\/]+$/u'],
+            'group_name' => ['required', 'min:1', 'max:255'],
         ]);
         if ($validator->fails())
             return response()->json($validator->messages(), 400);
@@ -98,6 +106,7 @@ class GroupsController extends Controller
     public function show(Group $group)
     {
         //
+        return static::groupFilterOutFields($group);
     }
 
     /**
@@ -109,6 +118,7 @@ class GroupsController extends Controller
     public function edit(Group $group)
     {
         //
+        abort(404);
     }
 
     /**
@@ -121,9 +131,8 @@ class GroupsController extends Controller
     public function update(Request $request, Group $group)
     {
         //
-        abort_unless(Auth::user()->is_admin, 403);
         $validator = Validator::make($request->all(), [
-            'group_name' => ['required', 'min:1', 'max:255', 'unique:groups', 'regex:/^[^\/]+$/u'],
+            'group_name' => ['required', 'min:1', 'max:255'],
         ]);
         if ($validator->fails())
             return response()->json($validator->messages(), 400);

@@ -17,37 +17,53 @@ class UsersController extends Controller
         $this->middleware('admin', ['except' => ['index', 'show']]);
     }
 
+    static function listUsers()
+    {
+        return User::all()->map(function(User $user)
+        {
+            return [
+                'key' => $user->username,
+                'display_name' => $user->display_name,
+            ];
+        });
+    }
+
     private static $usersFields = [
-        'display_name' => 'text',
-        'mobile_ext' => 'text',
-        'is_disabled' => 'checkbox',
-        'is_admin' => 'checkbox',
+        'display_name' => ['type' => 'text'],
+        'mobile_ext' => ['type' => 'text'],
+        'is_disabled' => ['type' => 'checkbox'],
+        'is_admin' => ['type' => 'checkbox'],
     ];
 
-    static function usersFields() {
+    static function usersFields()
+    {
         if (Auth::user()->is_admin)
-            return array_merge(static::$usersFields, ['reset_password' => 'button-link']);
+            return array_merge(static::$usersFields, [
+                'reset_password' => ['type' => 'button-link']]);
         return static::$usersFields;
     }
 
-    public static function userFilterOutFields(User $user) {
-        $arr = array();
+    public static function userFilterOutFields(User $user)
+    {
+        $fields = array();
         foreach (static::usersFields() as $key => $value)
             if ($value != 'button-link')
-                $arr[$key] = $user->$key;
-        if (Auth::user()->is_admin) {
-            $arr['update_url'] = route('users.update', $user['username']);
-            $arr['reset_password'] = [
+                $fields[$key] = $user->$key;
+        if (Auth::user()->is_admin)
+        {
+            $fields['update_url'] = route('users.update', $user['username']);
+            $fields['reset_password'] = [
                 'method' => 'DELETE',
                 'url' => $user->status == User::$STATUS_RESET_PASSWORD_REQUESTED
                     ? route('users.password.reset', $user['username']) : null,
             ];
         }
-        $arr['key'] = $user->username;
-        return $arr;
+        $fields['key'] = $user->username;
+        return $fields;
     }
 
-    public static function getUsersData() {
+    public static function getUsersData()
+    {
         $users_data = [
             'fields' => static::usersFields(),
             'rows' => User::all()->map([static::class, 'userFilterOutFields']),
@@ -67,9 +83,7 @@ class UsersController extends Controller
     public function index()
     {
         //
-        $users_data = static::getUsersData();
-        $groups_data = GroupsController::getGroupsData();
-        return view('users.index', compact(['users_data', 'groups_data']));
+        return static::getUsersData();
     }
 
     /**
