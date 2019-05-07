@@ -24,6 +24,11 @@ return [
     'create' => '新增',
     'reset_password' => '重置密碼',
     'group_name' => '群組',
+    'area_name' => '區域',
+    'shift_name' => '班別',
     'delete' => '刪除',
     'send_reset_password_request' => '傳送重置密碼請求',
+    'users_and_groups' => '用戶和群組',
+    'areas_and_shifts' => '區域和班別',
+    'responsible_person' => '負責人',
 ];
