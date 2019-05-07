@@ -18,8 +18,12 @@
                 @lang('ui.home')
             </a>
 
-            <a class="navbar-item" href="{{ route('users.index') }}">
-                @lang('ui.users')
+            <a class="navbar-item" href="{{ route('pages.users_and_groups') }}">
+                @lang('ui.users_and_groups')
+            </a>
+
+            <a class="navbar-item" href="{{ route('pages.areas_and_shifts') }}">
+                @lang('ui.areas_and_shifts')
             </a>
 
         </div>
