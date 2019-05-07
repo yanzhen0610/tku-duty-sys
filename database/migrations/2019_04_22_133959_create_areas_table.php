@@ -17,6 +17,9 @@ class CreateAreasTable extends Migration
             $table->bigIncrements('id')->index();
             $table->uuid('uuid')->unique()->index();
             $table->string('area_name');
+            $table->bigInteger('responsible_person_id')->unsigned()->index();
+            $table->foreign('responsible_person_id')->references('id')
+                ->on('users')->onDelete('restrict')->onUpdate('cascade');
             $table->timestamps();
         });
     }
