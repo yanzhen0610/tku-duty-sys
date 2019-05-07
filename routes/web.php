@@ -15,12 +15,22 @@ Route::get('/', function () {
     return view('index');
 })->name('home');
 
-Route::resource('users', 'UsersController')->only(['index', 'show', 'store', 'update']);
-Route::delete('users/{user}/password', 'UsersController@resetPassword')->name('users.password.reset');
-Route::resource('groups', 'GroupsController')->only(['store', 'update', 'destroy']);
-
 Auth::routes(['register' => false, 'reset' => false, 'verify' => false]);
-Route::group([], function() {
+Route::group([], function()
+{
     Route::get('password/reset', 'Auth\ForgotPasswordController@showRequestResetForm')->name('password.requestResetForm');
     Route::post('password/reset', 'Auth\ForgotPasswordController@requestReset')->name('password.requestReset');
+});
+
+Route::resource('users', 'UsersController')->only(['index', 'show', 'store', 'update']);
+Route::delete('users/{user}/password', 'UsersController@resetPassword')->name('users.password.reset');
+Route::resource('groups', 'GroupsController')->only(['index', 'store', 'update', 'destroy']);
+
+Route::resource('shifts', 'ShiftsController')->only(['index', 'show', 'store', 'update', 'destroy']);
+Route::resource('areas', 'AreasController')->only(['index', 'show', 'store', 'update', 'destroy']);
+
+Route::group(['as' => 'pages.', 'middleware' => 'auth'], function()
+{
+    Route::get('users_and_groups', 'PagesController@usersAndGroups')->name('users_and_groups');
+    Route::get('areas_and_shifts', 'PagesController@areasAndShifts')->name('areas_and_shifts');
 });
