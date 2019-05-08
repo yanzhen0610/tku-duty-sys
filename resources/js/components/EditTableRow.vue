@@ -24,19 +24,19 @@
         >
             <button-link v-if="fieldData.type == 'button-link'"
                 v-bind:keyName="key"
-                v-bind:value="copiedRowData[key]"
+                v-bind:value="rowData[key]"
                 @update-row="updateRow"
             >
             </button-link>
             <check-box v-else-if="fieldData.type == 'checkbox'"
                 v-bind:keyName="key"
-                v-bind:value="copiedRowData[key]"
+                v-bind:value="rowData[key]"
                 @update-value="updateValue"
             >
             </check-box>
             <dropdown v-else-if="fieldData.type == 'dropdown'"
                 v-bind:keyName="key"
-                v-bind:value="copiedRowData[key]"
+                v-bind:value="rowData[key]"
                 @update-value="updateValue"
             >
             </dropdown>
@@ -137,6 +137,14 @@
             },
         },
         watch: {
+            rowData: {
+                handler() {
+                    for (const key in this.fields)
+                        this.$set(this.copiedRowData, key, this.rowData[key]);
+                    this.updateChanged();
+                },
+                deep: true,
+            },
             copiedRowData: {
                 handler() {
                     this.emptyStringToNull();
@@ -148,6 +156,7 @@
         methods: {
             ...mapMutations([
                 'removeRow',
+                'updateRowData',
             ]),
             removeThis() {
                 this.$store.commit('removeRow', this.rowKey);
@@ -209,10 +218,7 @@
                 }
             },
             updateRow(newRowData) {
-                this.rowData = Object.assign(this.rowData, newRowData);
-                for (const key in this.fields)
-                    this.$set(this.copiedRowData, key, this.rowData[key]);
-                this.updateChanged()
+                this.$store.commit('updateRowData', {key: this.rowKey, newRowData});
             },
             emptyStringToNull() {
                 for (const field in this.fields)

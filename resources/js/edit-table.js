@@ -65,6 +65,9 @@ window.make_edit_table = function (el, data) {
             createNewRow(state) {
                 state.rows.push({editTableRowIndex: state.rowsLastId++, key: undefined, created: true});
             },
+            updateRowData(state, data) {
+                Vue.set(state.rows, data.key, {...state.rows[data.key], ...data.newRowData});
+            },
             removeRow(state, index) {
                 delete state.rows.splice(index, 1);
             },

@@ -18,7 +18,6 @@
 </template>
 
 <script>
-    import { object_compare } from '../utils.js';
     import { mapGetters } from 'vuex';
 
     export default {
@@ -63,8 +62,7 @@
         },
         watch: {
             value() {
-                if (!object_compare(this.value, this.copiedValue))
-                    this.$set(this, 'copiedValue', Object.assign({}, this.value));
+                this.$set(this, 'copiedValue', Object.assign({}, this.value));
             },
             copiedValue: {
                 handler() {

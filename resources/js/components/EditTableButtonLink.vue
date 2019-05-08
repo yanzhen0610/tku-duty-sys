@@ -16,7 +16,6 @@
         props: {
             value: {
                 type: Object,
-                required: true,
             },
             keyName: {
                 required: true,
