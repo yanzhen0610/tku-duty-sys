@@ -33,6 +33,10 @@ class User extends Authenticatable
         'id',
         'password',
         'remember_token',
+        'email_verified_at',
+        'status',
+        'created_at',
+        'updated_at',
     ];
 
     /**
@@ -40,7 +44,10 @@ class User extends Authenticatable
      *
      * @var array
      */
-    protected $appends = ['is_admin', 'is_disabled'];
+    protected $appends = [
+        // 'is_admin',
+        // 'is_disabled',
+    ];
 
     public static $STATUS_NORMAL = 0;
     public static $STATUS_RESET_PASSWORD_REQUESTED = 5;

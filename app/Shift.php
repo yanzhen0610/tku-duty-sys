@@ -25,6 +25,9 @@ class Shift extends Model
      */
     protected $hidden = [
         'id',
+        'area_id',
+        'created_at',
+        'updated_at',
     ];
 
     /**
@@ -32,7 +35,9 @@ class Shift extends Model
      *
      * @var array
      */
-    protected $appends = ['area'];
+    protected $appends = [
+        // 'area'
+    ];
 
     protected static function boot()
     {

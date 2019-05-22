@@ -25,6 +25,9 @@ class Area extends Model
      */
     protected $hidden = [
         'id',
+        'responsible_person_id',
+        'created_at',
+        'updated_at',
     ];
 
     /**
@@ -32,7 +35,9 @@ class Area extends Model
      *
      * @var array
      */
-    protected $appends = ['responsible_person'];
+    protected $appends = [
+        // 'responsible_person'
+    ];
 
     protected static function boot()
     {
