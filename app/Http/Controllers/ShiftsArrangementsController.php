@@ -120,8 +120,15 @@ class ShiftsArrangementsController extends Controller
         if ($validator->fails())
             return response()->json($validator->messages(), 400);
 
-        $shift_id = Shift::where('uuid', $request->input('shift'))->first()->id;
-        $on_duty_staff_id = User::where('username', $request->input('on_duty_staff'))->first()->id;
+        $on_duty_staff = $request->input('on_duty_staff');
+        if (!Auth::user()->is_admin && 
+                $on_duty_staff != Auth::user()->username)
+            return response(null, 403);
+
+        $shift_id = Shift::where('uuid', $request->input('shift'))
+            ->first()->id;
+        $on_duty_staff_id = User::where('username', $on_duty_staff)
+            ->first()->id;
 
         try
         {
@@ -184,6 +191,10 @@ class ShiftsArrangementsController extends Controller
     public function destroy(ShiftArrangement $shiftsArrangement)
     {
         //
+        if (!Auth::user()->is_admin && 
+                $shiftsArrangement->on_duty_staff->username !=
+                    Auth::user()->username)
+            abort(403);
         if ($shiftsArrangement->delete())
             return response(null, 204);
         return response(null, 400);
