@@ -23,6 +23,9 @@ class CreateShiftsTable extends Migration
 
             $table->string('shift_name');
 
+            $table->text('working_time')->nullable();
+            $table->text('working_hours')->nullable();
+
             $table->timestamps();
         });
     }

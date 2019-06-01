@@ -23,7 +23,13 @@ class ShiftsController extends Controller
             'area' => [
                 'type' => 'dropdown',
                 'default' => AreasController::listAreas(),
-            ]
+            ],
+            'working_time' => [
+                'type' => 'text',
+            ],
+            'working_hours' => [
+                'type' => 'text',
+            ],
         ];
         if (Auth::user()->is_admin)
             return array_merge(
@@ -115,7 +121,12 @@ class ShiftsController extends Controller
                 'area'
             ), 400);
 
-        $fields = $request->only(['shift_name', 'area']);
+        $fields = $request->only([
+            'shift_name',
+            'area',
+            'working_time',
+            'working_hours',
+        ]);
         $fields['area'] = $fields['area']['selected'];
         $fields['area_id'] = Area::where('uuid', $fields['area'])->first()->id;
 
@@ -171,7 +182,12 @@ class ShiftsController extends Controller
                 'area'
             ), 400);
 
-        $fields = $request->only(['shift_name', 'area.selected']);
+        $fields = $request->only([
+            'shift_name',
+            'area.selected',
+            'working_time',
+            'working_hours',
+        ]);
         $fields['area'] = $fields['area']['selected'];
 
         foreach ($fields as $key => $value)
