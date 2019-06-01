@@ -58,12 +58,15 @@
             </div>
             <div class="field is-horizontal">
                 <div class="field-label is-normal">
-                    <label class="label">{{ i18n['select_on_duty_staff'] }}:</label>
+                    <label class="label">{{ i18n['on_duty_staff'] }}:</label>
                 </div>
                 <div class="field-body">
                     <div class="field">
                         <div class="select">
                             <select v-model="selectedUser">
+                                <option v-bind:value="selectedUser"
+                                    disabled
+                                >{{ i18n['select_on_duty_staff'] }}</option>
                                 <option v-for="staff in staves"
                                     v-bind:key="staff.username"
                                     v-bind:selected="selectedUser == staff.username"
@@ -153,7 +156,7 @@ th, td {
         },
         data() {
             return {
-                selectedUser: null,
+                selectedUser: '__selecting__',
                 selectedArea: '__all__',
                 from_date: this.$store.state.duration.from_date,
                 to_date: this.$store.state.duration.to_date,
@@ -237,7 +240,8 @@ th, td {
             ...mapMutations([
             ]),
             arrangement_cell_on_click(shift, date) {
-                if (shift && date && this.selectedUser) {
+                if (shift && date && this.selectedUser && 
+                        this.selectedUser != '__selecting__') {
                     let arrangement = this.$store.getters.get_shifts_arrangements_by_shift_and_date_and_staff(shift.uuid, date, this.selectedUser);
                     if (arrangement)
                         this.remove_shift_arrangement_request(arrangement);
