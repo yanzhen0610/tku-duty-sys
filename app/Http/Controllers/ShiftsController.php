@@ -28,7 +28,7 @@ class ShiftsController extends Controller
         if (Auth::user()->is_admin)
             return array_merge(
                 ['shift_name' => ['type' => 'text']],
-                $base,
+                $base
             );
         return $base;
     }
@@ -56,7 +56,8 @@ class ShiftsController extends Controller
     {
         $shifts_data = [
             'fields' => ShiftsController::shiftsFields(),
-            'rows' => Shift::all()->map([ShiftsController::class, 'shiftFilterOutFields']),
+            'rows' => Shift::with('area')->get()
+                ->map([ShiftsController::class, 'shiftFilterOutFields']),
             'primary_key' => 'shift_name',
         ];
         if (Auth::user()->is_admin)

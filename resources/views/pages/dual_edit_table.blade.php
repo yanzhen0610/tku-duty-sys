@@ -20,10 +20,10 @@ $table_b_data['ui_i18n'] = __('ui');
 
 <script src="{{ mix('js/edit-table.js') }}" type="text/javascript"></script>
 <script>
-    const table_a_data = @json($table_a_data);
-    const table_b_data = @json($table_b_data);
-    const edit_table_a = make_edit_table('#edit-table-a', table_a_data);
-    const edit_table_b = make_edit_table('#edit-table-b', table_b_data);
+    var table_a_data = @json($table_a_data);
+    var table_b_data = @json($table_b_data);
+    var edit_table_a = make_edit_table('#edit-table-a', table_a_data);
+    var edit_table_b = make_edit_table('#edit-table-b', table_b_data);
 </script>
 
 @endsection

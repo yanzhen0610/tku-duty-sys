@@ -80,4 +80,14 @@ class Area extends Model
     {
         return $this->belongsTo('App\User', 'responsible_person_id', 'id');
     }
+
+    public function shifts()
+    {
+        return $this->hasMany('App\Shift', 'area_id', 'id');
+    }
+
+    public function getShiftsAttribute()
+    {
+        return $this->shifts()->getResults();
+    }
 }

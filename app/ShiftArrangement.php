@@ -58,6 +58,13 @@ class ShiftArrangement extends Model
         'date' => 'date',
     ];
 
+    /**
+     * The storage format of the model's date columns.
+     *
+     * @var string
+     */
+    protected $dateFormat = 'Y-m-d';
+
     protected static function boot()
     {
         parent::boot();

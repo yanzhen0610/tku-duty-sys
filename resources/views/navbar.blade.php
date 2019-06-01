@@ -26,6 +26,10 @@
                 @lang('ui.areas_and_shifts')
             </a>
 
+            <a class="navbar-item" href="{{ route('pages.shifts_arrangements_table') }}">
+                @lang('ui.shifts_arrangements_table')
+            </a>
+
         </div>
 
         @guest

@@ -65,7 +65,8 @@ class AreasController extends Controller
     {
         $areas_data = [
             'fields' => AreasController::areasFields(),
-            'rows' => Area::all()->map([AreasController::class, 'areaFilterOutFields']),
+            'rows' => Area::with('responsiblePerson')->get()
+                ->map([AreasController::class, 'areaFilterOutFields']),
             'primary_key' => 'area_name',
         ];
         if (Auth::user()->is_admin)

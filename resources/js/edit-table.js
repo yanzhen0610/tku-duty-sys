@@ -23,7 +23,6 @@ import Vuex from 'vuex';
 
 Vue.use(Vuex);
 
-Vue.component('edit-table-row', require('./components/EditTableRow.vue').default);
 Vue.component('edit-table', require('./components/EditTable.vue').default);
 
 /**
