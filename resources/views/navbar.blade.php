@@ -1,4 +1,4 @@
-<nav class="navbar is-transparent" role="navigation" aria-label="main navigation">
+<nav class="navbar is-transparent has-shadow" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
         <a class="navbar-item" href="{{ route('home') }}">
             <img src="{{ asset('images/logo.jpg') }}" width="28" height="28">
