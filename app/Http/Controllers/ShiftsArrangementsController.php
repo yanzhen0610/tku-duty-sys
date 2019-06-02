@@ -142,7 +142,7 @@ class ShiftsArrangementsController extends Controller
             return response(null, 400);
         }
 
-        return $arrangement;
+        return response()->json($arrangement);
     }
 
     /**

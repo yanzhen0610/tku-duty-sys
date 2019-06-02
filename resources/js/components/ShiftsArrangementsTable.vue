@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div>
+        <div class="content">
             <div class="field is-horizontal">
                 <div class="field-label is-normal">
                     <label class="label">{{ i18n['date_from'] }}:</label>
@@ -64,7 +64,7 @@
                     <div class="field">
                         <div class="select">
                             <select v-model="selectedUser">
-                                <option v-bind:value="selectedUser"
+                                <option value="__selecting__"
                                     disabled
                                 >{{ i18n['select_on_duty_staff'] }}</option>
                                 <option v-for="staff in staves"
@@ -112,7 +112,7 @@
                         <div v-if="row_data.type == 'week-shifts'">
                             <p v-for="on_duty_staff in day_data.on_duty_staves"
                                 v-bind:key="on_duty_staff.id">
-                                {{ on_duty_staff.display_name }}
+                                {{ on_duty_staff.display_name || on_duty_staff.username }}
                             </p>
                         </div>
                         <div v-else-if="row_data.type == 'week-day-strings'">
@@ -129,7 +129,8 @@
 <style>
 th, td {
     padding: 0.5rem;
-    border: 2px solid;
+    border: 1px solid;
+    border-color: dimgray;
     white-space: nowrap;
 }
 
