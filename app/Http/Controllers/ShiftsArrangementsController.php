@@ -20,6 +20,14 @@ class ShiftsArrangementsController extends Controller
     private static $START_OF_WEEK = Carbon::SUNDAY;
     private static $END_OF_WEEK = Carbon::SATURDAY;
 
+    private static function check_permission($username, $date)
+    {
+        if (Auth::user()->is_admin) return true;
+        if ($date < now()) return false;
+        if (Auth::user()->username != $username) return false;
+        return true;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -121,8 +129,8 @@ class ShiftsArrangementsController extends Controller
             return response()->json($validator->messages(), 400);
 
         $on_duty_staff = $request->input('on_duty_staff');
-        if (!Auth::user()->is_admin && 
-                $on_duty_staff != Auth::user()->username)
+        $date = $request->input('date');
+        if (!static::check_permission($on_duty_staff, $date))
             return response(null, 403);
 
         $shift_id = Shift::where('uuid', $request->input('shift'))
@@ -135,7 +143,7 @@ class ShiftsArrangementsController extends Controller
             $arrangement = ShiftArrangement::create([
                 'shift_id' => $shift_id,
                 'on_duty_staff_id' => $on_duty_staff_id,
-                'date' => $request->input('date'),
+                'date' => $date,
             ])->load('shift', 'onDutyStaff');
         } catch (QueryException $e)
         {
@@ -191,10 +199,11 @@ class ShiftsArrangementsController extends Controller
     public function destroy(ShiftArrangement $shiftsArrangement)
     {
         //
-        if (!Auth::user()->is_admin && 
-                $shiftsArrangement->on_duty_staff->username !=
-                    Auth::user()->username)
-            abort(403);
+        if (!static::check_permission(
+                $shiftsArrangement->on_duty_staff->username,
+                $shiftsArrangement->date))
+            return response(null, 403);
+
         if ($shiftsArrangement->delete())
             return response(null, 204);
         return response(null, 400);
