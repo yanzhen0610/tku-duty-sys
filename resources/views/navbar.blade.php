@@ -4,8 +4,7 @@
             <img src="{{ asset('images/logo.jpg') }}" width="28" height="28">
         </a>
 
-        <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false"
-            data-target="navbar">
+        <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbar">
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
             <span aria-hidden="true"></span>
@@ -48,20 +47,19 @@
                 <a class="navbar-link">
                     {{ Auth::user()->display_name ?? Auth::user()->username }}
                 </a>
-        
+
                 <div class="navbar-dropdown is-right is-boxed">
-                    <a class="navbar-item" href="{{ route('users.show', Auth::user()->username) }}">
+                    <a class="navbar-item" href="{{ route('user.self') }}">
                         @lang('ui.user')({{ Auth::user()->username }})
                     </a>
 
                     <hr class="navbar-divider">
 
-                    <a class="navbar-item" href="{{ route('logout') }}"
-                        onclick="event.preventDefault();
+                    <a class="navbar-item" href="{{ route('logout') }}" onclick="event.preventDefault();
                             document.getElementById('logout-form').submit();">
                         @lang('ui.logout')
                     </a>
-                    
+
                     <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                         @csrf
                     </form>
@@ -71,3 +69,31 @@
         @endguest
     </div>
 </nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Get all "navbar-burger" elements
+        const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+
+        // Check if there are any navbar burgers
+        if ($navbarBurgers.length > 0) {
+
+            // Add a click event on each of them
+            $navbarBurgers.forEach(el => {
+                el.addEventListener('click', function() {
+
+                    // Get the target from the "data-target" attribute
+                    const target = el.dataset.target;
+                    const $target = document.getElementById(target);
+
+                    // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+                    el.classList.toggle('is-active');
+                    $target.classList.toggle('is-active');
+
+                });
+            });
+        }
+
+    });
+</script>
