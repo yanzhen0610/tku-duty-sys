@@ -1,36 +1,34 @@
 <template>
-    <div>
-        <div class="content">
+    <div class="shifts_arrangements_table">
+        <div class="content configs">
             <div class="field is-horizontal">
                 <div class="field-label is-normal">
                     <label class="label">{{ i18n['date_from'] }}:</label>
                 </div>
                 <div class="field-body">
-                    <datepicker v-model="from_date"
-                        v-bind:format="'yyyy-MM-dd'"
-                        v-bind:input-class="['input', 'input-width']"
-                        v-bind:wrapper-class="['control']"
-                    ></datepicker>
+                    <div class="field is-horizontal">
+                        <datepicker v-model="from_date"
+                            v-bind:format="'yyyy-MM-dd'"
+                            v-bind:input-class="['input', 'input-width']"
+                            v-bind:wrapper-class="['control']"
+                        ></datepicker>
+                    </div>
 
-                <div class="field-label is-normal">
-                    <label class="label">{{ i18n['date_to'] }}:</label>
-                </div>
-                    <div class="field">
+                    <div class="field is-horizontal">
+                        <div class="field-label is-normal">
+                            <label class="label">{{ i18n['date_to'] }}:</label>
+                        </div>
                         <datepicker v-model="to_date"
                             v-bind:format="'yyyy-MM-dd'"
                             v-bind:input-class="['input', 'input-width']"
                             v-bind:wrapper-class="['control']"
                         ></datepicker>
                     </div>
-                </div>
-            </div>
-            <div class="field is-horizontal">
-                <div class="field-label"></div>
-                <div class="field-body">
+
                     <div class="field">
-                        <div class="control">
+                        <div class="field-label">
                             <button v-on:click="fetch_shifts_arrangements_data(from_date, to_date)"
-                                class="button is-primary"
+                                        class="button is-primary"
                             >{{ i18n['fetch_new_data'] }}</button>
                         </div>
                     </div>
@@ -56,7 +54,9 @@
                     </div>
                 </div>
             </div>
-            <div class="field is-horizontal">
+            <div v-if="is_admin"
+                class="field is-horizontal"
+            >
                 <div class="field-label is-normal">
                     <label class="label">{{ i18n['on_duty_staff'] }}:</label>
                 </div>
@@ -80,7 +80,7 @@
         </div>
 
         <div>
-            <table>
+            <table class="full-width">
                 <thead>
                     <tr>
                         <th>{{ i18n['week_days'] }}</th>
@@ -134,6 +134,14 @@ th, td {
     white-space: nowrap;
 }
 
+.shifts_arrangements_table {
+    max-width: 55rem;
+}
+
+.configs {
+    max-width: 55rem;
+}
+
 .hoverable-row:hover td {
   background-color: rgba(0, 0, 0, 0.2);
 }
@@ -144,6 +152,10 @@ th, td {
 
 .input-width {
     width: auto
+}
+
+.full-width {
+    width: 100%;
 }
 </style>
 
@@ -156,12 +168,16 @@ th, td {
             Datepicker,
         },
         data() {
-            return {
+            var data = {
                 selectedUser: '__selecting__',
                 selectedArea: '__all__',
                 from_date: this.$store.state.duration.from_date,
                 to_date: this.$store.state.duration.to_date,
             };
+            if (!this.$store.state.is_admin) {
+                data.selectedUser = this.$store.state.current_user.username;
+            }
+            return data;
         },
         watch: {
             from_date: {
@@ -179,6 +195,7 @@ th, td {
         },
         computed: {
             ...mapState([
+                'is_admin',
                 'i18n',
                 'areas',
                 'shifts',

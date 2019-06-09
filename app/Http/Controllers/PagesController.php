@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use \App\{Area, Shift, User, ShiftArrangement};
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class PagesController extends Controller
 {
@@ -29,6 +30,8 @@ class PagesController extends Controller
         $to_date = now()->addDays(30)->endOfWeek(Carbon::SATURDAY)->toDateString();
 
         $data = [
+            'is_admin' => Auth::user()->is_admin,
+            'current_user' => Auth::user(),
             'areas' => Area::with('shifts')->get(),
             'duration' => [
                 'from_date' => $from_date,
