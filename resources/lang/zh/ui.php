@@ -12,6 +12,7 @@ return [
     'area' => '區域',
     'username' => '帳號',
     'password' => '密碼',
+    'password_confirmation' => '密碼確認',
     'login_remember' => '保持登入狀態',
     'forget_password' => '忘記密碼',
     'display_name' => '名稱',

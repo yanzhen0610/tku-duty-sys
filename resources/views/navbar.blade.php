@@ -13,20 +13,29 @@
 
     <div id="navbar" class="navbar-menu">
         <div class="navbar-start">
-            <a class="navbar-item" href="{{ route('home') }}">
+
+            <!-- <a class="navbar-item" href="{{ route('home') }}">
                 @lang('ui.home')
+            </a> -->
+
+            <a class="navbar-item" href="{{ route('pages.shifts_arrangements_table') }}">
+                @lang('ui.shifts_arrangements_table')
             </a>
 
-            <a class="navbar-item" href="{{ route('pages.users_and_groups') }}">
-                @lang('ui.users_and_groups')
+            <a class="navbar-item" href="{{ route('pages.shifts_arrangements_table') }}">
+                @lang('ui.apply_for_a_shift_change')
+            </a>
+
+            <a class="navbar-item" href="{{ route('pages.shifts_arrangements_table') }}">
+                @lang('ui.shifts_arrangements_table')
             </a>
 
             <a class="navbar-item" href="{{ route('pages.areas_and_shifts') }}">
                 @lang('ui.areas_and_shifts')
             </a>
 
-            <a class="navbar-item" href="{{ route('pages.shifts_arrangements_table') }}">
-                @lang('ui.shifts_arrangements_table')
+            <a class="navbar-item" href="{{ route('pages.users_and_groups') }}">
+                @lang('ui.users_and_groups')
             </a>
 
         </div>

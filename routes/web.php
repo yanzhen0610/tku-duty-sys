@@ -12,7 +12,7 @@
 */
 
 Route::get('/', function () {
-    return view('index');
+    return redirect(route('pages.shifts_arrangements_table'));
 })->name('home');
 
 Auth::routes(['register' => false, 'reset' => false, 'verify' => false]);
@@ -22,6 +22,14 @@ Route::group([], function()
         ->name('password.requestResetForm');
     Route::post('password/request_reset', 'Auth\ForgotPasswordController@requestReset')
         ->name('password.requestReset');
+});
+Route::group(['middleware' => 'auth'], function()
+{
+    Route::get('user/self', 'UserProfile@self')->name('user.self');
+    Route::post(
+        'user/self/reset_password',
+        'UserProfile@resetPassword'
+    )->name('user.reset_password');
 });
 
 Route::resource('users', 'UsersController')
