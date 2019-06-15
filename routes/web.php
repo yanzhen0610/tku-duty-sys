@@ -49,10 +49,12 @@ Route::resource('shifts_arrangements', 'ShiftsArrangementsController')
 
 Route::group(['as' => 'pages.', 'middleware' => 'auth'], function()
 {
-    Route::get('users_and_groups', 'PagesController@usersAndGroups')
-        ->name('users_and_groups');
-    Route::get('areas_and_shifts', 'PagesController@areasAndShifts')
-        ->name('areas_and_shifts');
+    Route::get('users', 'PagesController@users')
+        ->name('users');
+    Route::get('areas', 'PagesController@areas')
+        ->name('areas');
+    Route::get('shifts', 'PagesController@shifts')
+        ->name('shifts');
     Route::get('shifts_arrangements_table', 'PagesController@shiftsArrangementsTable')
         ->name('shifts_arrangements_table');
 });

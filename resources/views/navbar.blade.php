@@ -26,16 +26,28 @@
                 @lang('ui.apply_for_a_shift_change')
             </a>
 
-            <a class="navbar-item" href="{{ route('pages.shifts_arrangements_table') }}">
-                @lang('ui.shifts_arrangements_table')
+            <a class="navbar-item" href="{{ route('pages.areas') }}">
+                @if (Auth::user()->is_admin)
+                    @lang('ui.areas_management')
+                @else
+                    @lang('ui.areas')
+                @endif
             </a>
 
-            <a class="navbar-item" href="{{ route('pages.areas_and_shifts') }}">
-                @lang('ui.areas_and_shifts')
+            <a class="navbar-item" href="{{ route('pages.shifts') }}">
+                @if (Auth::user()->is_admin)
+                    @lang('ui.shifts_management')
+                @else
+                    @lang('ui.shifts')
+                @endif
             </a>
 
-            <a class="navbar-item" href="{{ route('pages.users_and_groups') }}">
-                @lang('ui.users_and_groups')
+            <a class="navbar-item" href="{{ route('pages.users') }}">
+                @if (Auth::user()->is_admin)
+                    @lang('ui.users_management')
+                @else
+                    @lang('ui.users')
+                @endif
             </a>
 
         </div>

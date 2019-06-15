@@ -9,18 +9,24 @@ use Illuminate\Support\Facades\Auth;
 
 class PagesController extends Controller
 {
-    public function usersAndGroups()
+    public function users()
     {
         $table_a_data = UsersController::getUsersData();
-        // $table_b_data = GroupsController::getGroupsData();
         $table_b_data = [];
         return view('pages.dual_edit_table', compact(['table_a_data', 'table_b_data']));
     }
 
-    public function areasAndShifts()
+    public function areas()
     {
         $table_a_data = AreasController::getAreasData();
-        $table_b_data = ShiftsController::getShiftsData();
+        $table_b_data = [];
+        return view('pages.dual_edit_table', compact(['table_a_data', 'table_b_data']));
+    }
+
+    public function shifts()
+    {
+        $table_a_data = ShiftsController::getShiftsData();
+        $table_b_data = [];
         return view('pages.dual_edit_table', compact(['table_a_data', 'table_b_data']));
     }
 
