@@ -152,6 +152,11 @@ return [
         'area_name' => '區域名稱',
         'shift_name' => '班別名稱',
         'responsible_person' => '負責人',
+        'password' => '密碼',
+        'current_password' => '目前的密碼',
+        'new_password' => '新密碼',
+        'old_password' => '舊密碼',
+        'password_confirmation' => '確認密碼',
     ],
 
 ];
