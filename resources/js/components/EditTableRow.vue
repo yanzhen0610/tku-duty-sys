@@ -28,6 +28,12 @@
                 @update-row="updateRow"
             >
             </button-link>
+            <button-popup-window v-if="fieldData.type == 'button-popup-window'"
+                v-bind:keyName="key"
+                v-bind:value="rowData[key]"
+                @update-value="updateValue"
+            >
+            </button-popup-window>
             <check-box v-else-if="fieldData.type == 'checkbox'"
                 v-bind:keyName="key"
                 v-bind:value="rowData[key]"
@@ -84,6 +90,7 @@
     import { object_compare } from '../utils.js';
 
     import EditTableButtonLink from './EditTableButtonLink.vue';
+    import EditTableButtonPopupWindow from './EditTableButtonPopupWindow.vue';
     import EditTableCheckBox from './EditTableCheckBox.vue';
     import EditTableDropdown from './EditTableDropdown.vue';
     import { mapGetters, mapMutations } from 'vuex';
@@ -101,6 +108,7 @@
         },
         components: {
             'button-link': EditTableButtonLink,
+            'button-popup-window': EditTableButtonPopupWindow,
             'check-box': EditTableCheckBox,
             'dropdown': EditTableDropdown,
         },

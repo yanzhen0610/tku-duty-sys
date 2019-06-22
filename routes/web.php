@@ -23,21 +23,36 @@ Route::group([], function()
     Route::post('password/request_reset', 'Auth\ForgotPasswordController@requestReset')
         ->name('password.requestReset');
 });
-Route::group(['middleware' => 'auth'], function()
+Route::group(['as' => 'user.', 'middleware' => 'auth'], function()
 {
-    Route::get('user/self', 'UserProfile@self')->name('user.self');
+    Route::get('user/self', 'UserProfile@self')->name('self');
     Route::post(
         'user/self/reset_password',
         'UserProfile@resetPassword'
-    )->name('user.reset_password');
+    )->name('reset_password');
 });
 
-Route::resource('users', 'UsersController')
-    ->only(['index', 'show', 'store', 'update']);
-Route::delete('users/{user}/password', 'UsersController@resetPassword')
-    ->name('users.password.reset');
-Route::resource('groups', 'GroupsController')
-    ->only(['index', 'store', 'update', 'destroy']);
+Route::group(['as' => 'admin.', 'middleware' => ['auth', 'admin']], function()
+{
+    Route::get(
+        'admin/change_user_password/{user}',
+        'AdministrationController@changeUserPasswordPage'
+    )->name('changeUserPasswordPage');
+    Route::post(
+        'admin/change_user_password/{user}',
+        'AdministrationController@changeUserPassword'
+    )->name('changeUserPassword');
+});
+
+Route::group([], function()
+{
+    Route::resource('users', 'UsersController')
+        ->only(['index', 'show', 'store', 'update']);
+    Route::delete('users/{user}/password', 'UsersController@resetPassword')
+        ->name('users.password.reset');
+    Route::resource('groups', 'GroupsController')
+        ->only(['index', 'store', 'update', 'destroy']);
+});
 
 Route::resource('shifts', 'ShiftsController')
     ->only(['index', 'show', 'store', 'update', 'destroy']);

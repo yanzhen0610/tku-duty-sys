@@ -38,7 +38,8 @@ class UsersController extends Controller
     {
         if (Auth::user()->is_admin)
             return array_merge(static::$usersFields, [
-                'reset_password' => ['type' => 'button-link']]);
+                'reset_password' => ['type' => 'button-popup-window']
+            ]);
         return static::$usersFields;
     }
 
@@ -46,15 +47,14 @@ class UsersController extends Controller
     {
         $fields = array();
         foreach (static::usersFields() as $key => $value)
-            if ($value != 'button-link')
+            if ($value != 'button-popup-window')
                 $fields[$key] = $user->$key;
         if (Auth::user()->is_admin)
         {
             $fields['update_url'] = route('users.update', $user['username']);
             $fields['reset_password'] = [
-                'method' => 'DELETE',
                 'url' => $user->status == User::$STATUS_RESET_PASSWORD_REQUESTED
-                    ? route('users.password.reset', $user['username']) : null,
+                    ? route('admin.changeUserPassword', $user['username']) : null,
             ];
         }
         $fields['key'] = $user->username;

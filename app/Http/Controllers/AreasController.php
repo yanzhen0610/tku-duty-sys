@@ -44,13 +44,13 @@ class AreasController extends Controller
     static function areaFilterOutFields(Area $area)
     {
         $fields = array();
-        foreach (static::areasFields() as $key => $value) {
+        foreach ($area->toArray() as $key => $value) {
             if ($key == 'responsible_person')
                 $fields[$key] = [
-                    'selected' => $area->$key->username,
+                    'selected' => $value['username'],
                 ];
             else
-                $fields[$key] = $area->$key;
+                $fields[$key] = $value;
         }
         if (Auth::user()->is_admin)
         {

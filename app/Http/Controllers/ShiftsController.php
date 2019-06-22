@@ -42,13 +42,13 @@ class ShiftsController extends Controller
     static function shiftFilterOutFields(Shift $shift)
     {
         $fields = array();
-        foreach (static::shiftsFields() as $key => $value)
+        foreach ($shift->toArray() as $key => $value)
             if ($key == 'area')
                 $fields[$key] = [
-                    'selected' => $shift->$key->uuid,
+                    'selected' => $value['uuid'],
                 ];
             else
-                $fields[$key] = $shift->$key;
+                $fields[$key] = $value;
         if (Auth::user()->is_admin)
         {
             $fields['update_url'] = route('shifts.update', $shift->uuid);

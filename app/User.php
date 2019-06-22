@@ -50,7 +50,7 @@ class User extends Authenticatable
     ];
 
     public static $STATUS_NORMAL = 0;
-    public static $STATUS_RESET_PASSWORD_REQUESTED = 5;
+    public static $STATUS_RESET_PASSWORD_REQUESTED = 1;
 
     public function getIsAdminAttribute()
     {
