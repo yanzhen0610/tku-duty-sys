@@ -344,10 +344,7 @@ RUN cd /app \
     && chown -R www-data:www-data . \
     && docker-php-ext-install pdo_mysql \
     && echo 'APP_KEY=' >.env \
-    && php artisan key:generate \
-    && php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+    && php artisan key:generate
 
 WORKDIR /app
 
