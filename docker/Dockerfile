@@ -342,7 +342,10 @@ COPY docker/docker-entrypoint.sh /usr/local/bin
 COPY docker/nginx-default.conf /etc/nginx/conf.d/default.conf
 RUN cd /app \
     && chown -R www-data:www-data . \
-    && docker-php-ext-install pdo_mysql
+    && docker-php-ext-install pdo_mysql \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
 WORKDIR /app
 

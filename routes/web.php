@@ -11,9 +11,7 @@
 |
 */
 
-Route::get('/', function () {
-    return redirect(route('pages.shifts_arrangements_table'));
-})->name('home');
+Route::get('/', 'HomeController@index')->name('home');
 
 Auth::routes(['register' => false, 'reset' => false, 'verify' => false]);
 Route::group([], function()

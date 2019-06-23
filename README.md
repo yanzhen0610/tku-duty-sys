@@ -16,6 +16,14 @@ npm run production
 rm -fr node_modules # clean up
 ```
 
+### cache
+
+```sh
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
 ## database
 
 ### migrate
