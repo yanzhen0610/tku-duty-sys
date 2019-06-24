@@ -54,7 +54,7 @@
                     </div>
                 </div>
             </div>
-            <div v-if="is_admin"
+            <div v-if="current_user && is_admin"
                 class="field is-horizontal"
             >
                 <div class="field-label is-normal">
@@ -174,7 +174,8 @@ th, td {
                 from_date: this.$store.state.duration.from_date,
                 to_date: this.$store.state.duration.to_date,
             };
-            if (!this.$store.state.is_admin) {
+            if (this.$store.state.current_user &&
+                !this.$store.state.is_admin) {
                 data.selectedUser = this.$store.state.current_user.username;
             }
             return data;
@@ -196,6 +197,7 @@ th, td {
         computed: {
             ...mapState([
                 'is_admin',
+                'current_user',
                 'i18n',
                 'areas',
                 'shifts',

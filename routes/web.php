@@ -60,7 +60,7 @@ Route::resource('areas', 'AreasController')
 Route::resource('shifts_arrangements', 'ShiftsArrangementsController')
     ->only(['index', 'show', 'store', 'update', 'destroy']);
 
-Route::group(['as' => 'pages.', 'middleware' => 'auth'], function()
+Route::group(['as' => 'pages.'], function()
 {
     Route::get('users', 'PagesController@users')
         ->name('users');

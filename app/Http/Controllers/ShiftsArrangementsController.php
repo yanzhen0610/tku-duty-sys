@@ -13,7 +13,7 @@ class ShiftsArrangementsController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware(['auth'], ['except' => ['index', 'show']]);
     }
 
     private static $DEFAULT_DURATION_DAYS = 30;

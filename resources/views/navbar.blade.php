@@ -23,6 +23,7 @@
                     @lang('ui.shifts_arrangements_table')
                 </a>
 
+                @if (Auth::check())
                 <a class="navbar-item" href="{{ route('pages.areas') }}">
                     @if (Auth::user()->is_admin)
                         @lang('ui.areas_management')
@@ -46,6 +47,7 @@
                         @lang('ui.users')
                     @endif
                 </a>
+                @endif
 
             </div>
 

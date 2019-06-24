@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\Auth;
 
 class PagesController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth'], ['except' => 'shiftsArrangementsTable']);
+    }
+
     public function users()
     {
         $table_a_data = UsersController::getUsersData();
@@ -36,8 +41,8 @@ class PagesController extends Controller
         $to_date = now()->addDays(30)->endOfWeek(Carbon::SATURDAY)->toDateString();
 
         $data = [
-            'is_admin' => Auth::user()->is_admin,
-            'current_user' => Auth::user(),
+            'is_admin' => false,
+            'current_user' => null,
             'areas' => Area::with('shifts')->get(),
             'duration' => [
                 'from_date' => $from_date,
@@ -62,6 +67,12 @@ class PagesController extends Controller
                 ],
             ],
         ];
+
+        if (Auth::check())
+        {
+            $data['is_admin'] = Auth::user()->is_admin;
+            $data['current_user'] = Auth::user();
+        }
 
         return view('pages.shifts_arrangements_table', ['data' => $data]);
     }
