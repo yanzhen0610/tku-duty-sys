@@ -64,7 +64,7 @@
                     <div class="field">
                         <div class="select">
                             <select v-model="selectedUser">
-                                <option value="__selecting__"
+                                <option value="__not_selected__"
                                     disabled
                                 >{{ i18n['select_on_duty_staff'] }}</option>
                                 <option v-for="staff in staves"
@@ -83,14 +83,14 @@
             <table class="full-width">
                 <thead>
                     <tr>
-                        <th>{{ i18n['week_days'] }}</th>
-                        <th>{{ i18n['sunday'] }}</th>
-                        <th>{{ i18n['monday'] }}</th>
-                        <th>{{ i18n['tuesday'] }}</th>
-                        <th>{{ i18n['wednesday'] }}</th>
-                        <th>{{ i18n['thursday'] }}</th>
-                        <th>{{ i18n['friday'] }}</th>
-                        <th>{{ i18n['saturday'] }}</th>
+                        <th><div class="field week-day-strings-title">{{ i18n['week_days'] }}</div></th>
+                        <th><div class="field weekend">{{ i18n['sunday'] }}</div></th>
+                        <th><div class="field weekday">{{ i18n['monday'] }}</div></th>
+                        <th><div class="field weekday">{{ i18n['tuesday'] }}</div></th>
+                        <th><div class="field weekday">{{ i18n['wednesday'] }}</div></th>
+                        <th><div class="field weekday">{{ i18n['thursday'] }}</div></th>
+                        <th><div class="field weekday">{{ i18n['friday'] }}</div></th>
+                        <th><div class="field weekend">{{ i18n['saturday'] }}</div></th>
                     </tr>
                 </thead>
 
@@ -99,24 +99,30 @@
                     v-bind:class="{ 'hoverable-row': row_data.type == 'week-shifts' }">
 
                     <td v-if="row_data.type == 'week-shifts'">
-                        {{ row_data.shift.shift_name }}
+                        <div class="field">{{ row_data.shift.shift_name }}</div>
                     </td>
                     <td v-else-if="row_data.type == 'week-day-strings'">
-                        {{ i18n['date'] }}
+                        <div class="field week-day-strings-title">{{ i18n['date'] }}</div>
                     </td>
 
                     <td v-for="(day_data, index) in row_data.value"
                         v-bind:key="index"
-                        v-on:click="arrangement_cell_on_click(row_data.shift, day_data.date)"
+                        v-on:click="arrangement_cell_on_click(row_data.shift, day_data.date.string)"
+                        v-bind:class="{'cursor-pointer': selectedUser != '__not_selected__'}"
                         class="hoverable-data">
-                        <div v-if="row_data.type == 'week-shifts'">
+                        <div v-if="row_data.type == 'week-shifts'"
+                            class="field"
+                        >
                             <p v-for="on_duty_staff in day_data.on_duty_staves"
                                 v-bind:key="on_duty_staff.id">
                                 {{ on_duty_staff.display_name || on_duty_staff.username }}
                             </p>
                         </div>
-                        <div v-else-if="row_data.type == 'week-day-strings'">
-                            {{ day_data }}
+                        <div v-else-if="row_data.type == 'week-day-strings'"
+                            v-bind:class="{'weekday': day_data.type == 'weekday', 'weekend': day_data.type == 'weekend'}"
+                            class="field"
+                        >
+                            {{ day_data.string }}
                         </div>
                     </td>
 
@@ -128,10 +134,30 @@
 
 <style>
 th, td {
-    padding: 0.5rem;
+    /* padding: 0.5rem; */
     border: 1px solid;
     border-color: dimgray;
     white-space: nowrap;
+}
+
+td .field, th .field {
+    padding: 0.5rem;
+}
+
+td .weekday, th .weekday {
+    background-color: rgb(248, 205, 161);
+}
+
+td .weekend {
+    background-color: rgb(217, 217, 217);
+}
+
+th .weekend {
+    background-color: rgb(192, 192, 192);
+}
+
+td .week-day-strings-title, th .week-day-strings-title {
+    background-color: rgb(163, 203, 250);
 }
 
 .shifts_arrangements_table {
@@ -142,12 +168,16 @@ th, td {
     max-width: 55rem;
 }
 
+.cursor-pointer {
+    cursor: pointer;
+}
+
 .hoverable-row:hover td {
-  background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
 .hoverable-row:hover .hoverable-data:hover {
-  background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.3);
 }
 
 .input-width {
@@ -169,7 +199,7 @@ th, td {
         },
         data() {
             var data = {
-                selectedUser: '__selecting__',
+                selectedUser: '__not_selected__',
                 selectedArea: '__all__',
                 from_date: this.$store.state.duration.from_date,
                 to_date: this.$store.state.duration.to_date,
@@ -214,13 +244,10 @@ th, td {
                 {
                     let week_days_strings = new Array();
                     for (var week_day = 0; week_day < 7; ++week_day)
-                        week_days_strings.push(
-                            this.format_date(
-                                new Date(
-                                    (week * 7 + week_day - 4) * 86400000
-                                )
-                            )
-                        );
+                        week_days_strings.push({
+                            string: this.format_date(new Date((week * 7 + week_day - 4) * 86400000)),
+                            type: week_day == 0 || week_day == 6 ? 'weekend' : 'weekday',
+                        });
 
                     rows_data.push({
                         key: 'week-' + week,
@@ -261,7 +288,7 @@ th, td {
             ]),
             arrangement_cell_on_click(shift, date) {
                 if (shift && date && this.selectedUser && 
-                        this.selectedUser != '__selecting__') {
+                        this.selectedUser != '__not_selected__') {
                     let arrangement = this.$store.getters.get_shifts_arrangements_by_shift_and_date_and_staff(shift.uuid, date, this.selectedUser);
                     if (arrangement)
                         this.remove_shift_arrangement_request(arrangement);
