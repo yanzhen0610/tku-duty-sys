@@ -55,7 +55,11 @@ window.make_shifts_arrangements_table = function (el, data) {
             },
         },
         getters: {
-            shifts_arrangements: (state) => state.shifts_arrangements,
+            on_duty_staves: (state) => {
+                let on_duty_staves = {};
+                state.shifts_arrangements.forEach(arrangement => on_duty_staves[arrangement.on_duty_staff.username] = arrangement.on_duty_staff);
+                return on_duty_staves;
+            },
             from_week: (state) => Math.trunc((Date.parse(
                     state.duration.from_date) / 86400000 + 4) / 7),
             to_week: (state) => Math.trunc((Date.parse(
