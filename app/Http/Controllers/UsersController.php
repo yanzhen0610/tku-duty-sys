@@ -65,7 +65,7 @@ class UsersController extends Controller
     {
         $users_data = [
             'fields' => static::usersFields(),
-            'rows' => User::all()->map([static::class, 'userFilterOutFields'])->sortBy('is_disabled')->values(),
+            'rows' => User::with(['isAdminEager', 'isDisabledEager'])->get()->map([static::class, 'userFilterOutFields'])->sortBy('is_disabled')->values(),
             'editable' => Auth::user()->is_admin,
             'primary_key' => 'username',
         ];
