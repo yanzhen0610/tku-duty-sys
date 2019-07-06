@@ -9,6 +9,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title')</title>
+    @includeFirst(['default-fonts-'.Config::get('app.locale'), 'default-fonts-zh'])
     <link rel="stylesheet" href="{{ mix('css/bulma.css') }}">
     <link rel="stylesheet" href="{{ mix('css/materialize/checkboxes.css') }}">
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
