@@ -16,23 +16,20 @@ class PagesController extends Controller
 
     public function users()
     {
-        $table_a_data = UsersController::getUsersData();
-        $table_b_data = [];
-        return view('pages.dual_edit_table', compact(['table_a_data', 'table_b_data']));
+        $table_data = UsersController::getUsersData();
+        return view('pages.edit_table', compact(['table_data']));
     }
 
     public function areas()
     {
-        $table_a_data = AreasController::getAreasData();
-        $table_b_data = [];
-        return view('pages.dual_edit_table', compact(['table_a_data', 'table_b_data']));
+        $table_data = AreasController::getAreasData();
+        return view('pages.edit_table', compact(['table_data']));
     }
 
     public function shifts()
     {
-        $table_a_data = ShiftsController::getShiftsData();
-        $table_b_data = [];
-        return view('pages.dual_edit_table', compact(['table_a_data', 'table_b_data']));
+        $table_data = ShiftsController::getShiftsData();
+        return view('pages.edit_table', compact(['table_data']));
     }
 
     public function shiftsArrangementsTable()

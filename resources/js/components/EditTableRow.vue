@@ -50,7 +50,11 @@
                 <input
                     v-model="copiedRowData[key]"
                     v-bind:type="fieldData.type"
-                    v-bind:class="{ input: fieldData.type == 'text', 'is-danger': errors[key] }"
+                    v-bind:class="{
+                        input: fieldData.type == 'text',
+                        'is-danger': errors[key],
+                        'input-text': fieldData.type == 'text',
+                    }"
                 >
             </div>
             <span v-else>{{ rowData[key] }}</span>
@@ -85,6 +89,12 @@
         </td>
     </tr>
 </template>
+
+<style>
+.input-text {
+    min-width: 8rem;
+}
+</style>
 
 <script>
     import { object_compare } from '../utils.js';

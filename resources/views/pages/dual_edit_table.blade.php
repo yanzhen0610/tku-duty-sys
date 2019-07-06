@@ -9,7 +9,7 @@ $table_b_data['ui_i18n'] = __('ui');
 
 @section('content')
 
-<div class="columns is-multiline is-variable is-8">
+<div class="columns is-multiline is-variable">
     <div class="column is-narrow">
         <div id="edit-table-a"></div>
     </div>
