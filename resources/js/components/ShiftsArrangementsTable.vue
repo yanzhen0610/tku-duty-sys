@@ -80,56 +80,59 @@
         </div>
       </div>
 
-      <div class="shifts_arrangements_table">
-        <table class="full-width">
-          <thead>
-            <tr>
-              <th><div class="field week-day-strings-title">{{ i18n['week_days'] }}</div></th>
-              <th><div class="field weekend">{{ i18n['sunday'] }}</div></th>
-              <th><div class="field weekday">{{ i18n['monday'] }}</div></th>
-              <th><div class="field weekday">{{ i18n['tuesday'] }}</div></th>
-              <th><div class="field weekday">{{ i18n['wednesday'] }}</div></th>
-              <th><div class="field weekday">{{ i18n['thursday'] }}</div></th>
-              <th><div class="field weekday">{{ i18n['friday'] }}</div></th>
-              <th><div class="field weekend">{{ i18n['saturday'] }}</div></th>
+      <div class="outer">
+        <div class="shifts_arrangements_table inner">
+          <table class="full-width">
+            <thead>
+              <tr>
+                <th><div class="field week-day-strings-title">{{ i18n['week_days'] }}</div></th>
+                <th><div class="field weekend">{{ i18n['sunday'] }}</div></th>
+                <th><div class="field weekday">{{ i18n['monday'] }}</div></th>
+                <th><div class="field weekday">{{ i18n['tuesday'] }}</div></th>
+                <th><div class="field weekday">{{ i18n['wednesday'] }}</div></th>
+                <th><div class="field weekday">{{ i18n['thursday'] }}</div></th>
+                <th><div class="field weekday">{{ i18n['friday'] }}</div></th>
+                <th><div class="field weekend">{{ i18n['saturday'] }}</div></th>
+              </tr>
+            </thead>
+
+            <tr v-for="row_data in rows_data"
+              v-bind:key="row_data.key"
+              v-bind:class="{ 'hoverable-row': row_data.type == 'week-shifts' }">
+
+              <td v-if="row_data.type == 'week-shifts'">
+                <div class="field">{{ row_data.shift.shift_name }}</div>
+              </td>
+              <td v-else-if="row_data.type == 'week-day-strings'">
+                <div class="field week-day-strings-title">{{ i18n['date'] }}</div>
+              </td>
+
+              <td v-for="(day_data, index) in row_data.value"
+                v-bind:key="index"
+                v-on:click="arrangement_cell_on_click(row_data.shift, day_data.date.string)"
+                v-bind:class="{'cursor-pointer': selectedUser != '__not_selected__'}"
+                class="hoverable-data">
+                <div v-if="row_data.type == 'week-shifts'"
+                  class="field"
+                >
+                  <p v-for="on_duty_staff in day_data.on_duty_staves"
+                    v-bind:key="on_duty_staff.id">
+                    {{ on_duty_staff.display_name || on_duty_staff.username }}
+                  </p>
+                </div>
+                <div v-else-if="row_data.type == 'week-day-strings'"
+                  v-bind:class="{'weekday': day_data.type == 'weekday', 'weekend': day_data.type == 'weekend'}"
+                  class="field"
+                >
+                  {{ day_data.string }}
+                </div>
+              </td>
+
             </tr>
-          </thead>
-
-          <tr v-for="row_data in rows_data"
-            v-bind:key="row_data.key"
-            v-bind:class="{ 'hoverable-row': row_data.type == 'week-shifts' }">
-
-            <td v-if="row_data.type == 'week-shifts'">
-              <div class="field">{{ row_data.shift.shift_name }}</div>
-            </td>
-            <td v-else-if="row_data.type == 'week-day-strings'">
-              <div class="field week-day-strings-title">{{ i18n['date'] }}</div>
-            </td>
-
-            <td v-for="(day_data, index) in row_data.value"
-              v-bind:key="index"
-              v-on:click="arrangement_cell_on_click(row_data.shift, day_data.date.string)"
-              v-bind:class="{'cursor-pointer': selectedUser != '__not_selected__'}"
-              class="hoverable-data">
-              <div v-if="row_data.type == 'week-shifts'"
-                class="field"
-              >
-                <p v-for="on_duty_staff in day_data.on_duty_staves"
-                  v-bind:key="on_duty_staff.id">
-                  {{ on_duty_staff.display_name || on_duty_staff.username }}
-                </p>
-              </div>
-              <div v-else-if="row_data.type == 'week-day-strings'"
-                v-bind:class="{'weekday': day_data.type == 'weekday', 'weekend': day_data.type == 'weekend'}"
-                class="field"
-              >
-                {{ day_data.string }}
-              </div>
-            </td>
-
-          </tr>
-        </table>
+          </table>
+        </div>
       </div>
+
     </div>
 
     <div class="side-view">
@@ -185,10 +188,23 @@
 
 .shifts_arrangements_table {
   max-width: 55rem;
+  margin: 1rem;
+}
+
+.outer {
+  max-width: 100%;
+  position: relative;
+  overflow-x: auto;
+}
+
+.outer .inner {
+  float: none;
+  display: inline-block;
 }
 
 .configs {
-  max-width: 55rem;
+  max-width: 48rem;
+  white-space: nowrap;
 }
 
 .cursor-pointer {
@@ -204,7 +220,8 @@
 }
 
 .input-width {
-  width: auto
+  width: auto;
+  max-width: 10rem;
 }
 
 .full-width {
@@ -213,6 +230,7 @@
 
 .side-view {
   float: left;
+  max-width: 100%;
 }
 
 .side-view + .side-view {
