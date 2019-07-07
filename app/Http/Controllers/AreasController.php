@@ -7,7 +7,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Lang;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
 class AreasController extends Controller
 {
@@ -131,6 +131,7 @@ class AreasController extends Controller
         )->first()->id;
 
         $area = Area::create($fields);
+        $area->load('responsiblePerson');
 
         return static::areaFilterOutFields($area);
     }

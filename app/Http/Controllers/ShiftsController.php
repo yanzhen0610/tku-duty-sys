@@ -7,7 +7,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Lang;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
 class ShiftsController extends Controller
 {
@@ -131,6 +131,7 @@ class ShiftsController extends Controller
         $fields['area_id'] = Area::where('uuid', $fields['area'])->first()->id;
 
         $shift = Shift::create($fields);
+        $shift->load('area');
 
         return static::shiftFilterOutFields($shift);
     }
