@@ -18,14 +18,15 @@ class UserProfile extends Controller
     {
         $request->validate([
             'current_password' => [
-                'required'
+                'required',
             ],
             'new_password' => [
                 'required',
-                'min:4'
+                'min:4',
             ],
             'password_confirmation' => [
                 'required',
+                'same:new_password',
             ],
         ]);
 
@@ -33,13 +34,6 @@ class UserProfile extends Controller
         if (!Hash::check($current_password, Auth::user()->password))
             return back()->withErrors([
                 'current_password' => trans('user_profile.current_password_not_matched'),
-            ]);
-        $new_password = $request->input('new_password');
-        $password_confirmation = $request->input('password_confirmation');
-
-        if ($new_password != $password_confirmation)
-            return back()->withErrors([
-                'password_confirmation' => trans('user_profile.password_confirmation_not_matched'),
             ]);
 
         $user = Auth::user();
