@@ -78,6 +78,15 @@
             </div>
           </div>
         </div>
+        <!-- <div class="message-block">
+          <div v-bind:class="{
+              'is-info': false,
+              'is-success': true,
+              'is-warning': false,
+            }"
+            class="notification"
+          >{{ message }}123</div>
+        </div> -->
       </div>
 
       <div class="outer">
@@ -85,14 +94,14 @@
           <table class="full-width">
             <thead>
               <tr>
-                <th><div class="field week-day-strings-title">{{ i18n['week_days'] }}</div></th>
-                <th><div class="field weekend">{{ i18n['sunday'] }}</div></th>
-                <th><div class="field weekday">{{ i18n['monday'] }}</div></th>
-                <th><div class="field weekday">{{ i18n['tuesday'] }}</div></th>
-                <th><div class="field weekday">{{ i18n['wednesday'] }}</div></th>
-                <th><div class="field weekday">{{ i18n['thursday'] }}</div></th>
-                <th><div class="field weekday">{{ i18n['friday'] }}</div></th>
-                <th><div class="field weekend">{{ i18n['saturday'] }}</div></th>
+                <th><div class="table-field week-days-title">{{ i18n['week_days'] }}</div></th>
+                <th><div class="table-field weekend-title">{{ i18n['sunday'] }}</div></th>
+                <th><div class="table-field weekday-title">{{ i18n['monday'] }}</div></th>
+                <th><div class="table-field weekday-title">{{ i18n['tuesday'] }}</div></th>
+                <th><div class="table-field weekday-title">{{ i18n['wednesday'] }}</div></th>
+                <th><div class="table-field weekday-title">{{ i18n['thursday'] }}</div></th>
+                <th><div class="table-field weekday-title">{{ i18n['friday'] }}</div></th>
+                <th><div class="table-field weekend-title">{{ i18n['saturday'] }}</div></th>
               </tr>
             </thead>
 
@@ -101,31 +110,95 @@
               v-bind:class="{ 'hoverable-row': row_data.type == 'week-shifts' }">
 
               <td v-if="row_data.type == 'week-shifts'">
-                <div class="field">{{ row_data.shift.shift_name }}</div>
+
+                <div class="table-field table-field-side">
+                  <span v-bind:class="{
+                      'lock-open-icon-wrapper': !row_data.is_locked,
+                      'lock-icon-wrapper': row_data.is_locked,
+                      'cursor-pointer': !read_only,
+                    }"
+                    v-on:click="set_lock_state({
+                      from_date: row_data.from_date,
+                      to_date: row_data.to_date,
+                      shift: row_data.shift.uuid,
+                      lock: !row_data.is_locked,
+                    })"
+                    class="icon-wrapper"
+                  >
+                    <span v-bind:class="{hidden: !row_data.is_locked}"><i class="icon fas fa-lock"></i></span>
+                    <span v-bind:class="{hidden: row_data.is_locked}"><i class="icon fas fa-lock-open"></i></span>
+                  </span>
+                  {{ row_data.shift.shift_name }}
+                </div>
+
               </td>
-              <td v-else-if="row_data.type == 'week-day-strings'">
-                <div class="field week-day-strings-title">{{ i18n['date'] }}</div>
+              <td v-else-if="row_data.type == 'week-day-titles'"
+                class="week-days-title">
+                <div class="table-field week-days-title">{{ i18n['date'] }}</div>
               </td>
 
               <td v-for="(day_data, index) in row_data.value"
                 v-bind:key="index"
-                v-on:click="arrangement_cell_on_click(row_data.shift, day_data.date.string)"
-                v-bind:class="{'cursor-pointer': selectedUser != '__not_selected__'}"
+                v-on:click="arrangement_cell_on_click(row_data.shift, day_data.date)"
+                v-bind:class="{
+                  'cursor-pointer': row_data.type == 'week-shifts' && selectedUser != '__not_selected__',
+                  'weekday-title': row_data.type == 'week-day-titles' && day_data.type == 'weekday',
+                  'weekend-title': row_data.type == 'week-day-titles' && day_data.type == 'weekend',
+                }"
                 class="hoverable-data">
+
                 <div v-if="row_data.type == 'week-shifts'"
-                  class="field"
+                  class="table-field"
                 >
-                  <p v-for="on_duty_staff in day_data.on_duty_staves"
-                    v-bind:key="on_duty_staff.id">
-                    {{ on_duty_staff.display_name || on_duty_staff.username }}
-                  </p>
+                  <div class="table-field-side">
+                    <span v-bind:class="{
+                        'lock-open-icon-wrapper': !day_data.is_locked,
+                        'lock-icon-wrapper': day_data.is_locked,
+                        'cursor-pointer': !read_only,
+                      }"
+                      v-on:click="set_lock_state({
+                        date: day_data.date,
+                        shift: row_data.shift.uuid,
+                        lock: !day_data.is_locked,
+                      })"
+                      class="icon-wrapper"
+                    >
+                      <span v-bind:class="{hidden: !day_data.is_locked}"><i class="icon fas fa-lock"></i></span>
+                      <span v-bind:class="{hidden: day_data.is_locked}"><i class="icon fas fa-lock-open"></i></span>
+                    </span>
+                  </div>
+                  <div class="table-field-side">
+                    <p v-for="on_duty_staff in day_data.on_duty_staves"
+                      v-bind:key="on_duty_staff.id">
+                      {{ on_duty_staff.display_name || on_duty_staff.username }}
+                    </p>
+                  </div>
                 </div>
-                <div v-else-if="row_data.type == 'week-day-strings'"
-                  v-bind:class="{'weekday': day_data.type == 'weekday', 'weekend': day_data.type == 'weekend'}"
-                  class="field"
+                <div v-else-if="row_data.type == 'week-day-titles'"
+                  v-bind:class="{
+                    'weekday-title': day_data.type == 'weekday',
+                    'weekend-title': day_data.type == 'weekend',
+                  }"
+                  class="table-field table-field-side"
                 >
-                  {{ day_data.string }}
+                  <span v-bind:class="{
+                      'lock-open-icon-wrapper': !day_data.is_locked,
+                      'lock-icon-wrapper': day_data.is_locked,
+                      'cursor-pointer': !read_only,
+                    }"
+                    v-on:click="set_lock_state({
+                      date: day_data.title,
+                      shifts: shifts.map(x => x.uuid),
+                      lock: !day_data.is_locked,
+                    })"
+                    class="icon-wrapper"
+                  >
+                    <span v-bind:class="{hidden: !day_data.is_locked}"><i class="icon fas fa-lock"></i></span>
+                    <span v-bind:class="{hidden: day_data.is_locked}"><i class="icon fas fa-lock-open"></i></span>
+                  </span>
+                  {{ day_data.title }}
                 </div>
+
               </td>
 
             </tr>
@@ -157,37 +230,81 @@
 </template>
 
 <style>
+.hidden {
+  display: none;
+}
+
+.icon {
+  color: rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.fa-lock {
+  left: 0.35rem;
+}
+
+.fa-lock-open {
+  left: 0.25rem;
+}
+
+.icon-wrapper {
+  border-radius: 50%;
+  display: inline-block;
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.lock-icon-wrapper {
+  background: rgba(255, 188, 188, 0.7);
+}
+
+.lock-open-icon-wrapper {
+  background: rgba(188, 255, 188, 0.7);
+}
+
+.table-field {
+  height: 100%;
+}
+
+.table-field-side {
+  float: none;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .shifts_arrangements_table th,
 .shifts_arrangements_table td {
   border: 1px solid;
   border-color: dimgray;
   white-space: nowrap;
+  vertical-align: middle;
 }
 
-.shifts_arrangements_table td .field, th .field {
+.shifts_arrangements_table td .table-field,
+.shifts_arrangements_table th .table-field {
   padding: 0.5rem;
 }
 
-.shifts_arrangements_table td .weekday,
-.shifts_arrangements_table th .weekday {
+.weekday-title {
   background-color: rgb(248, 205, 161);
 }
 
-.shifts_arrangements_table td .weekend {
+.shifts_arrangements_table td .weekend-title,
+.weekend-title {
   background-color: rgb(217, 217, 217);
 }
 
-.shifts_arrangements_table th .weekend {
+.shifts_arrangements_table th .weekend-title {
   background-color: rgb(192, 192, 192);
 }
 
-.shifts_arrangements_table td .week-day-strings-title,
-.shifts_arrangements_table th .week-day-strings-title {
+.shifts_arrangements_table td .week-days-title,
+.shifts_arrangements_table th .week-days-title,
+.week-days-title {
   background-color: rgb(163, 203, 250);
 }
 
 .shifts_arrangements_table {
-  max-width: 55rem;
   margin: 1rem;
 }
 
@@ -200,6 +317,10 @@
 .outer .inner {
   float: none;
   display: inline-block;
+}
+
+.message-block {
+  margin: 1.5rem;
 }
 
 .configs {
@@ -277,6 +398,7 @@
       ...mapState([
         'is_admin',
         'current_user',
+        'read_only',
         'i18n',
         'areas',
         'shifts',
@@ -288,35 +410,51 @@
         'to_week',
         'on_duty_staves',
       ]),
+      read_only() {
+        return this.$store.state.read_only;
+      },
       rows_data() {
         let rows_data = new Array();
+        let locks = this.$store.state.locks;
+
         for (var week = this.$store.getters.from_week; week <= this.$store.getters.to_week; ++week)
         {
-          let week_days_strings = new Array();
+          let shifts = this.$store.state.shifts;
+          if (this.selectedArea && this.selectedArea != '__all__')
+            shifts = this.$store.getters.get_area_by_uuid(this.selectedArea).shifts;
+
+          let week_days_titles = new Array();
           for (var week_day = 0; week_day < 7; ++week_day)
-            week_days_strings.push({
-              string: this.format_date(new Date((week * 7 + week_day - 4) * 86400000)),
+          {
+            let date = this.format_date(new Date((week * 7 + week_day - 4) * 86400000));
+            week_days_titles.push({
+              title: date,
               type: week_day == 0 || week_day == 6 ? 'weekend' : 'weekday',
+              is_locked: shifts.every(x => locks[x.uuid][date]),
             });
+          }
 
           rows_data.push({
             key: 'week-' + week,
-            type: 'week-day-strings',
-            value: week_days_strings,
+            type: 'week-day-titles',
+            value: week_days_titles,
+            is_locked: week_days_titles.every(x => x.is_locked),
           });
-
-          var shifts = this.$store.state.shifts;
-          if (this.selectedArea && this.selectedArea != '__all__')
-            shifts = this.$store.getters.get_area_by_uuid(this.selectedArea).shifts;
 
           for (let shift of shifts)
           {
             let week_shifts_arrangements = new Array();
             for (var i = 0; i < 7; ++i)
+            {
+              let date = week_days_titles[i].title;
+              let is_locked = locks[shift.uuid][date];
+
               week_shifts_arrangements.push({
-                date: week_days_strings[i],
+                date,
+                is_locked,
                 on_duty_staves: new Array(),
               });
+            }
 
             let arrangements = this.$store.getters.get_shifts_arrangements_by_week_and_shift(week, shift.uuid);
             for (let arrangement of arrangements)
@@ -327,6 +465,9 @@
               type: 'week-shifts',
               shift: shift,
               value: week_shifts_arrangements,
+              from_date: week_shifts_arrangements[0].date,
+              to_date: week_shifts_arrangements[week_shifts_arrangements.length - 1].date,
+              is_locked: week_shifts_arrangements.every(x => x.is_locked),
             });
           }
         }
@@ -336,7 +477,37 @@
     methods: {
       ...mapMutations([
       ]),
+      set_lock_state(data) {
+        if (this.read_only) return;
+
+        const outer = this;
+        const method = this.$store.state.locks_crud.update.method;
+        const url = this.$store.state.locks_crud.update.url;
+
+        const handler = function() {
+          if (this.readyState == 4 && this.responseURL == url) {
+            try {
+              const response = JSON.parse(this.responseText);
+              if (this.status == 200) {
+                outer.update_locks(response);
+              }
+            } catch (e) {}
+          }
+        };
+
+        this.$store.state.ajax(
+          method,
+          url,
+          handler,
+          data
+        );
+      },
+      update_locks(locks) {
+        this.$store.commit('update_locks', locks);
+      },
       arrangement_cell_on_click(shift, date) {
+        if (this.read_only) return;
+
         if (shift && date && this.selectedUser && 
             this.selectedUser != '__not_selected__') {
           let arrangement = this.$store.getters.get_shifts_arrangements_by_shift_and_date_and_staff(shift.uuid, date, this.selectedUser);
@@ -347,22 +518,27 @@
         }
       },
       add_shift_arrangement_request(shift, date) {
+        if (this.read_only) return;
+
         const outer = this;
+        const method = this.$store.state.crud.create.method;
+        const url = this.$store.state.crud.create.url;
+
         const handler = function() {
           if (this.readyState == 4) {
             try {
               const response = JSON.parse(this.responseText);
-              if (this.status == 200 || this.status == 201) {
+              if ((this.status == 200 || this.status == 201)
+                  && this.responseURL == url) {
                 outer.append_shift_arrangement(response);
-              } else if (this.status == 400) {
               } else {}
             } catch (e) {}
           }
         };
 
         this.$store.state.ajax(
-          this.$store.state.crud.create.method,
-          this.$store.state.crud.create.url,
+          method,
+          url,
           handler,
           {
             shift: shift.uuid,
@@ -372,6 +548,8 @@
         );
       },
       remove_shift_arrangement_request(arrangement) {
+        if (this.read_only) return;
+
         const outer = this;
         const handler = function() {
           if (this.readyState == 4) {
@@ -405,6 +583,10 @@
       },
       fetch_shifts_arrangements_data(from_date, to_date) {
         this.$store.commit('fetch_shifts_arrangements_data', {
+          from_date,
+          to_date,
+        });
+        this.$store.commit('fetch_locks_data', {
           from_date,
           to_date,
         });

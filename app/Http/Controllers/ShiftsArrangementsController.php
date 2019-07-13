@@ -7,7 +7,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 
 class ShiftsArrangementsController extends Controller
 {
@@ -20,11 +20,12 @@ class ShiftsArrangementsController extends Controller
     private static $START_OF_WEEK = Carbon::SUNDAY;
     private static $END_OF_WEEK = Carbon::SATURDAY;
 
-    private static function check_permission($username, $date)
+    private static function check_permission($shift, $date, $on_duty_staff_id)
     {
         if (Auth::user()->is_admin) return true;
+        if ($shift->area->responsible_person_id == Auth::user()->id) return true;
         if ($date < now()) return false;
-        if (Auth::user()->username != $username) return false;
+        if (Auth::user()->id != $on_duty_staff_id) return false;
         return true;
     }
 
@@ -38,8 +39,8 @@ class ShiftsArrangementsController extends Controller
     {
         //
         $validator = Validator::make($request->all(), [
-            'from_date',
-            'to_date',
+            'from_date' => ['date_format:Y-m-d'],
+            'to_date' => ['date_format:Y-m-d'],
             'area' => ['exists:areas,uuid'],
             'shift' => ['exists:shifts,uuid'],
         ]);
@@ -130,18 +131,17 @@ class ShiftsArrangementsController extends Controller
 
         $on_duty_staff = $request->input('on_duty_staff');
         $date = $request->input('date');
-        if (!static::check_permission($on_duty_staff, $date))
-            return response(null, 403);
+        $shift = Shift::with('area')->where('uuid', $request->input('shift'))->first();
 
-        $shift_id = Shift::where('uuid', $request->input('shift'))
-            ->first()->id;
-        $on_duty_staff_id = User::where('username', $on_duty_staff)
-            ->first()->id;
+        $on_duty_staff_id = User::where('username', $on_duty_staff)->first()->id;
+        
+        if (!static::check_permission($shift, $date, $on_duty_staff_id))
+            return response(null, 403);
 
         try
         {
             $arrangement = ShiftArrangement::create([
-                'shift_id' => $shift_id,
+                'shift_id' => $shift->id,
                 'on_duty_staff_id' => $on_duty_staff_id,
                 'date' => $date,
             ])->load('shift', 'onDutyStaff');
@@ -200,8 +200,9 @@ class ShiftsArrangementsController extends Controller
     {
         //
         if (!static::check_permission(
-                $shiftsArrangement->on_duty_staff->username,
-                $shiftsArrangement->date))
+                $shiftsArrangement->shift,
+                $shiftsArrangement->date,
+                $shiftsArrangement->on_duty_staff_id))
             return response(null, 403);
 
         if ($shiftsArrangement->delete())

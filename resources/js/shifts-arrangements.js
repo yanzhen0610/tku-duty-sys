@@ -69,6 +69,10 @@ window.make_shifts_arrangements_table = function (el, data) {
             get_shifts_arrangements_by_shift_and_date_and_staff: (state) => (shift_uuid, date, staff_username) => state.shifts_arrangements.find(v => v.shift.uuid == shift_uuid && v.date == date && v.on_duty_staff.username == staff_username),
         },
         mutations: {
+            update_locks(state, locks) {
+                for (let shift_uuid in locks) for (let date in locks[shift_uuid])
+                    Vue.set(state.locks[shift_uuid], date, locks[shift_uuid][date]);
+            },
             set_duration(state, duration) {
                 Vue.set(state, 'duration', duration);
             },
@@ -101,6 +105,24 @@ window.make_shifts_arrangements_table = function (el, data) {
                     handler,
                     args
                 );
+            },
+            fetch_locks_data(state, args) {
+                const handler = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                        try {
+                            const locks = JSON.parse(this.responseText);
+                            for (let shift_uuid in locks) for (let date in locks[shift_uuid])
+                                Vue.set(state.locks[shift_uuid], date, locks[shift_uuid][date]);
+                        } catch (e) {}
+                    }
+                };
+
+                state.ajax(
+                    state.locks_crud.read.method,
+                    state.locks_crud.read.url,
+                    handler,
+                    args
+                )
             },
         },
     });

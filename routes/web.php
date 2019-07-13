@@ -16,10 +16,15 @@ Route::get('/', 'HomeController@index')->name('home');
 Auth::routes(['register' => false, 'reset' => false, 'verify' => false]);
 Route::group([], function()
 {
-    Route::get('password/request_reset', 'Auth\ForgotPasswordController@showRequestResetForm')
-        ->name('password.requestResetForm');
-    Route::post('password/request_reset', 'Auth\ForgotPasswordController@requestReset')
-        ->name('password.requestReset');
+    Route::get(
+        'password/request_reset',
+        'Auth\ForgotPasswordController@showRequestResetForm'
+    )->name('password.requestResetForm');
+
+    Route::post(
+        'password/request_reset',
+        'Auth\ForgotPasswordController@requestReset'
+    )->name('password.requestReset');
 });
 Route::group(['as' => 'user.', 'middleware' => 'auth'], function()
 {
@@ -36,6 +41,7 @@ Route::group(['as' => 'admin.', 'middleware' => ['auth', 'admin']], function()
         'admin/change_user_password/{user}',
         'AdministrationController@changeUserPasswordPage'
     )->name('changeUserPasswordPage');
+
     Route::post(
         'admin/change_user_password/{user}',
         'AdministrationController@changeUserPassword'
@@ -46,8 +52,12 @@ Route::group([], function()
 {
     Route::resource('users', 'UsersController')
         ->only(['index', 'show', 'store', 'update']);
-    Route::delete('users/{user}/password', 'UsersController@resetPassword')
-        ->name('users.password.reset');
+
+    Route::delete(
+        'users/{user}/password',
+        'UsersController@resetPassword'
+    )->name('users.password.reset');
+
     Route::resource('groups', 'GroupsController')
         ->only(['index', 'store', 'update', 'destroy']);
 });
@@ -60,14 +70,38 @@ Route::resource('areas', 'AreasController')
 Route::resource('shifts_arrangements', 'ShiftsArrangementsController')
     ->only(['index', 'show', 'store', 'update', 'destroy']);
 
+Route::group(['as' => 'shift_arrangement_locks'], function()
+{
+    Route::get(
+        'shift_arrangement_locks',
+        'ShiftArrangementLocksController@index'
+    )->name('.index');
+
+    Route::post(
+        'shift_arrangement_locks',
+        'ShiftArrangementLocksController@update'
+    )->name('.update');
+});
+
 Route::group(['as' => 'pages.'], function()
 {
-    Route::get('users', 'PagesController@users')
-        ->name('users');
-    Route::get('areas', 'PagesController@areas')
-        ->name('areas');
-    Route::get('shifts', 'PagesController@shifts')
-        ->name('shifts');
-    Route::get('shifts_arrangements_table', 'PagesController@shiftsArrangementsTable')
-        ->name('shifts_arrangements_table');
+    Route::get(
+        'users_table',
+        'PagesController@users'
+    )->name('users');
+
+    Route::get(
+        'areas_table',
+        'PagesController@areas'
+    )->name('areas');
+
+    Route::get(
+        'shifts_table',
+        'PagesController@shifts'
+    )->name('shifts');
+
+    Route::get(
+        'shifts_arrangements_table',
+        'PagesController@shiftsArrangementsTable'
+    )->name('shifts_arrangements_table');
 });

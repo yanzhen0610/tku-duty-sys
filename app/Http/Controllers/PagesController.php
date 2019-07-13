@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use \App\{Area, Shift, User, ShiftArrangement};
+use \App\{Area, Shift, User, ShiftArrangement, ShiftArrangementLock};
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -37,10 +37,16 @@ class PagesController extends Controller
         $from_date = now()->startOfWeek(Carbon::SUNDAY)->toDateString();
         $to_date = now()->addDays(30)->endOfWeek(Carbon::SATURDAY)->toDateString();
 
+        $areas = Area::with('shifts')->get();
+        $is_admin = Auth::check() && (Auth::user()->is_admin || $areas->contains(function ($value, $key) {
+            return $value->responsible_person_id == Auth::user()->id;
+        }));
+
         $data = [
-            'is_admin' => false,
-            'current_user' => null,
-            'areas' => Area::with('shifts')->get(),
+            'is_admin' => $is_admin,
+            'read_only' => !Auth::check(),
+            'current_user' => Auth::check() ? Auth::user() : null,
+            'areas' => $areas,
             'duration' => [
                 'from_date' => $from_date,
                 'to_date' => $to_date,
@@ -49,6 +55,7 @@ class PagesController extends Controller
             'staves' => User::all(),
             'shifts_arrangements' => ShiftArrangement::with(['shift', 'onDutyStaff'])
                 ->whereBetween('date', [$from_date, $to_date])->get(),
+            'locks' => ShiftArrangementLocksController::getIsLocked($from_date, $to_date),
             'crud' => [
                 'create' => [
                     'url' => route('shifts_arrangements.store'),
@@ -63,13 +70,17 @@ class PagesController extends Controller
                     'method' => 'DELETE',
                 ],
             ],
+            'locks_crud' => [
+                'read' => [
+                    'url' => route('shift_arrangement_locks.index'),
+                    'method' => 'GET',
+                ],
+                'update' => [
+                    'url' => route('shift_arrangement_locks.update'),
+                    'method' => 'POST',
+                ],
+            ],
         ];
-
-        if (Auth::check())
-        {
-            $data['is_admin'] = Auth::user()->is_admin;
-            $data['current_user'] = Auth::user();
-        }
 
         return view('pages.shifts_arrangements_table', ['data' => $data]);
     }
