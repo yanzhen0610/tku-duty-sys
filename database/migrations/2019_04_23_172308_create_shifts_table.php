@@ -27,6 +27,7 @@ class CreateShiftsTable extends Migration
             $table->text('working_hours')->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

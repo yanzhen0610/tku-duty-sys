@@ -167,7 +167,6 @@ class ShiftsController extends Controller
      */
     public function update(Request $request, Shift $shift)
     {
-        //
         $validator = Validator::make($request->all(), [
             'shift_name' => ['required', 'min:1', 'max:255'],
             'area.selected' => ['required', 'exists:areas,uuid'],
@@ -206,7 +205,6 @@ class ShiftsController extends Controller
      */
     public function destroy(Shift $shift)
     {
-        //
         try
         {
             $shift->delete();

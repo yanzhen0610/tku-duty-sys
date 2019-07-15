@@ -20,6 +20,7 @@ class CreateGroupsTable extends Migration
             $table->uuid('uuid')->unique()->index();
             $table->string('group_name')->index();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         DB::table('groups')->insert([

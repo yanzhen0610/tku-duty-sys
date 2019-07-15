@@ -2,8 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\{Area, Shift, User, ShiftArrangement};
-use Illuminate\Database\QueryException;
+use App\{
+    Area,
+    Shift,
+    User,
+    ShiftArrangement,
+    ShiftArrangementLock,
+    Events\ShiftArrangementChangeEvent
+};
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -20,13 +26,27 @@ class ShiftsArrangementsController extends Controller
     private static $START_OF_WEEK = Carbon::SUNDAY;
     private static $END_OF_WEEK = Carbon::SATURDAY;
 
-    private static function check_permission($shift, $date, $on_duty_staff_id)
+    private static function is_manager($shift)
     {
-        if (Auth::user()->is_admin) return true;
-        if ($shift->area->responsible_person_id == Auth::user()->id) return true;
-        if ($date < now()) return false;
-        if (Auth::user()->id != $on_duty_staff_id) return false;
-        return true;
+        return Auth::user()->is_admin
+            || $shift->area->responsible_person_id == Auth::user()->id;
+    }
+
+    private static function is_locked(Carbon $date, $shift)
+    {
+        $time_now = now();
+        $lock = ShiftArrangementLock::firstOrNew(
+            [
+                'date' => $date->format('Y-m-d'),
+                'shift_id' => $shift->id,
+            ],
+            [
+                'is_locked' => $date < $time_now,
+            ]
+        );
+        if ($lock->updated_at == null) return $lock->is_locked;
+        return $lock->date > $time_now || $lock->updated_at > $date
+            ? $lock->is_locked : false;
     }
 
     /**
@@ -37,7 +57,6 @@ class ShiftsArrangementsController extends Controller
      */
     public function index(Request $request)
     {
-        //
         $validator = Validator::make($request->all(), [
             'from_date' => ['date_format:Y-m-d'],
             'to_date' => ['date_format:Y-m-d'],
@@ -62,7 +81,19 @@ class ShiftsArrangementsController extends Controller
         $area = $request->input('area');
         $shift = $request->input('shift');
 
-        $query = ShiftArrangement::with(['shift', 'onDutyStaff']);
+        $query = ShiftArrangement::with(
+            ['shift', 'onDutyStaff' => function ($query) {
+                $query->withTrashed(); // show deleted staves
+            }]);
+        $query = $query->whereIn('shift_id', function ($query)
+        {
+            $query->select('id')->from((new Shift())->getTable())
+                ->whereNull('deleted_at')
+                ->whereIn('area_id', function ($query) {
+                    $query->select('id')->from((new Area())->getTable())
+                        ->whereNull('deleted_at');
+                });
+        });
         $query = $query->whereBetween('date', [$from_date, $to_date]);
         if ($area)
         {
@@ -107,7 +138,6 @@ class ShiftsArrangementsController extends Controller
      */
     public function create()
     {
-        //
         abort(404);
     }
 
@@ -119,7 +149,6 @@ class ShiftsArrangementsController extends Controller
      */
     public function store(Request $request)
     {
-        //
         $validator = Validator::make($request->all(), [
             'shift' => ['required', 'exists:shifts,uuid'],
             'on_duty_staff' => ['required', 'exists:users,username'],
@@ -130,25 +159,32 @@ class ShiftsArrangementsController extends Controller
             return response()->json($validator->messages(), 400);
 
         $on_duty_staff = $request->input('on_duty_staff');
-        $date = $request->input('date');
+        $date = Carbon::parse($request->input('date'));
         $shift = Shift::with('area')->where('uuid', $request->input('shift'))->first();
 
         $on_duty_staff_id = User::where('username', $on_duty_staff)->first()->id;
         
-        if (!static::check_permission($shift, $date, $on_duty_staff_id))
+        $is_manager = static::is_manager($shift);
+        $is_owner = $on_duty_staff_id == Auth::user()->id;
+        $is_locked = static::is_locked($date, $shift);
+
+        if (!$is_manager && (!$is_owner || $is_locked))
             return response(null, 403);
 
-        try
-        {
-            $arrangement = ShiftArrangement::create([
-                'shift_id' => $shift->id,
-                'on_duty_staff_id' => $on_duty_staff_id,
-                'date' => $date,
-            ])->load('shift', 'onDutyStaff');
-        } catch (QueryException $e)
-        {
-            return response(null, 400);
-        }
+        $arrangement = ShiftArrangement::firstOrCreate([
+            'shift_id' => $shift->id,
+            'on_duty_staff_id' => $on_duty_staff_id,
+            'date' => $date,
+        ])->load('shift', 'onDutyStaff');
+
+        event(new ShiftArrangementChangeEvent(
+            $date,
+            $arrangement->shift,
+            $arrangement->on_duty_staff,
+            $is_locked,
+            true,
+            Auth::user()
+        ));
 
         return response()->json($arrangement);
     }
@@ -161,7 +197,6 @@ class ShiftsArrangementsController extends Controller
      */
     public function show(ShiftArrangement $shiftsArrangement)
     {
-        //
         return $shiftsArrangement;
     }
 
@@ -173,7 +208,6 @@ class ShiftsArrangementsController extends Controller
      */
     public function edit(ShiftArrangement $shiftArrangement)
     {
-        //
         abort(404);
     }
 
@@ -186,7 +220,6 @@ class ShiftsArrangementsController extends Controller
      */
     public function update(Request $request, ShiftArrangement $shiftArrangement)
     {
-        //
         abort(501);
     }
 
@@ -198,15 +231,28 @@ class ShiftsArrangementsController extends Controller
      */
     public function destroy(ShiftArrangement $shiftsArrangement)
     {
-        //
-        if (!static::check_permission(
-                $shiftsArrangement->shift,
-                $shiftsArrangement->date,
-                $shiftsArrangement->on_duty_staff_id))
+        $arrangement = $shiftsArrangement;
+
+        $is_manager = static::is_manager($arrangement->shift);
+        $is_owner = $arrangement->on_duty_staff_id == Auth::user()->id;
+        $is_locked = static::is_locked($arrangement->date, $arrangement->shift);
+
+        if (!$is_manager && (!$is_owner || $is_locked))
             return response(null, 403);
 
+            
         if ($shiftsArrangement->delete())
+        {
+            event(new ShiftArrangementChangeEvent(
+                $arrangement->date,
+                $arrangement->shift,
+                $arrangement->on_duty_staff,
+                $is_locked,
+                false,
+                Auth::user()
+            ));
             return response(null, 204);
+        }
         return response(null, 400);
     }
 }

@@ -46,17 +46,11 @@ class ShiftArrangementLocksController extends Controller
         }
         else if ($area)
         {
-            Area::with('shifts')->where('uuid', $area)->get()->each(
-                function ($item, $key) use (&$shifts)
-                {
-                    $item->shifts->each(
-                        function ($item, $key) use (&$shifts)
-                        {
-                            array_push($shifts, $item);
-                        }
-                    );
-                }
-            );
+            $shifts = Shift::where('area_id', function ($query) use ($area)
+            {
+                $query->select('id')->from((new Area())->getTable())
+                    ->where('uuid', $area);
+            })->get();
 
             $query = $query->whereIn(
                 'shift_id',
@@ -78,30 +72,16 @@ class ShiftArrangementLocksController extends Controller
         }
         else
         {
-            Area::with('shifts')->get()->each(
-                function ($item, $key) use (&$shifts)
-                {
-                    $item->shifts->each(
-                        function ($item, $key) use (&$shifts)
-                        {
-                            array_push($shifts, $item);
-                        }
-                    );
-                }
-            );
+            $shifts = Shift::all();
         }
 
         $locks = [];
         $period = new CarbonPeriod($from_date, $to_date, CarbonInterval::days());
         $time_now = now();
 
-        foreach ($shifts as $key => $shift)
-        {
-            foreach ($period as $date)
-            {
-                $locks[$shift->uuid][$date->format('Y-m-d')] = $date < $time_now;
-            }
-        }
+        // defaults
+        foreach ($shifts as $key => $shift) foreach ($period as $date)
+            $locks[$shift->uuid][$date->format('Y-m-d')] = $date < $time_now;
 
         $query->get()->each(function ($item, $key) use (&$locks, $time_now)
         {
@@ -120,7 +100,6 @@ class ShiftArrangementLocksController extends Controller
      */
     public function index(Request $request)
     {
-        //
         $validator = Validator::make($request->all(), [
             'from_date' => [
                 'date_format:Y-m-d',
@@ -163,7 +142,6 @@ class ShiftArrangementLocksController extends Controller
      */
     public function create()
     {
-        //
         abort(404);
     }
 
@@ -175,7 +153,6 @@ class ShiftArrangementLocksController extends Controller
      */
     public function store(Request $request)
     {
-        //
         abort(404);
     }
 
@@ -187,7 +164,6 @@ class ShiftArrangementLocksController extends Controller
      */
     public function show(Request $request)
     {
-        //
         return $request;
     }
 
@@ -199,7 +175,6 @@ class ShiftArrangementLocksController extends Controller
      */
     public function edit(Request $request)
     {
-        //
         abort(404);
     }
 
@@ -211,7 +186,6 @@ class ShiftArrangementLocksController extends Controller
      */
     public function update(Request $request)
     {
-        //
         $validator = Validator::make($request->all(), [
             'lock' => [
                 'required',
@@ -275,7 +249,7 @@ class ShiftArrangementLocksController extends Controller
         {
             $shifts = Shift::with('area')->where('area_id', function ($query) use ($area)
             {
-                $query->select('id')->from('areas')->where('uuid', $area);
+                $query->select('id')->from((new Area())->getTable())->where('uuid', $area);
             })->get();
         }
         else
@@ -324,7 +298,6 @@ class ShiftArrangementLocksController extends Controller
      */
     public function destroy(Request $request)
     {
-        //
         abort(404);
     }
 }

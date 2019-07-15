@@ -4,9 +4,12 @@ namespace App;
 
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Group extends Model
 {
+    use SoftDeletes;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -26,6 +29,7 @@ class Group extends Model
         'id',
         'created_at',
         'updated_at',
+        'deleted_at',
     ];
 
     protected static function boot()

@@ -51,9 +51,23 @@ class PagesController extends Controller
                 'from_date' => $from_date,
                 'to_date' => $to_date,
             ],
-            'shifts' => Shift::with('area')->get(),
+            'shifts' => Shift::with('area')->whereIn('area_id', function ($query) {
+                $query->select('id')->from((new Area())->getTable())
+                    ->whereNull('deleted_at');
+            })->get(),
             'staves' => User::all(),
-            'shifts_arrangements' => ShiftArrangement::with(['shift', 'onDutyStaff'])
+            'shifts_arrangements' => ShiftArrangement::with(
+                ['shift', 'onDutyStaff' => function ($query) {
+                    $query->withTrashed(); // show deleted staves
+                }])
+                ->whereIn('shift_id', function ($query) {
+                    $query->select('id')->from((new Shift())->getTable())
+                        ->whereNull('deleted_at')
+                        ->whereIn('area_id', function ($query) {
+                            $query->select('id')->from((new Area())->getTable())
+                                ->whereNull('deleted_at');
+                        });
+                })
                 ->whereBetween('date', [$from_date, $to_date])->get(),
             'locks' => ShiftArrangementLocksController::getIsLocked($from_date, $to_date),
             'crud' => [
@@ -84,4 +98,9 @@ class PagesController extends Controller
 
         return view('pages.shifts_arrangements_table', ['data' => $data]);
     }
+
+    public function shiftArrangementChangeLogs()
+    {
+    }
+
 }

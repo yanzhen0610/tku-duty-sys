@@ -11,7 +11,7 @@
               <datepicker v-model="from_date"
                 v-bind:format="'yyyy-MM-dd'"
                 v-bind:input-class="['input', 'input-width']"
-                v-bind:wrapper-class="['control']"
+                v-bind:wrapper-class="['control', 'fix-datepicker']"
               ></datepicker>
             </div>
 
@@ -22,7 +22,7 @@
               <datepicker v-model="to_date"
                 v-bind:format="'yyyy-MM-dd'"
                 v-bind:input-class="['input', 'input-width']"
-                v-bind:wrapper-class="['control']"
+                v-bind:wrapper-class="['control', 'fix-datepicker']"
               ></datepicker>
             </div>
 
@@ -326,6 +326,10 @@
 .configs {
   max-width: 48rem;
   white-space: nowrap;
+}
+
+.fix-datepicker {
+  white-space: normal;
 }
 
 .cursor-pointer {

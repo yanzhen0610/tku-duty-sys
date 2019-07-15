@@ -4,9 +4,12 @@ namespace App;
 
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Shift extends Model
 {
+    use SoftDeletes;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -28,6 +31,7 @@ class Shift extends Model
         'area_id',
         'created_at',
         'updated_at',
+        'deleted_at',
     ];
 
     /**

@@ -21,6 +21,7 @@ class CreateAreasTable extends Migration
             $table->foreign('responsible_person_id')->references('id')
                 ->on('users')->onDelete('restrict')->onUpdate('cascade');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

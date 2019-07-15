@@ -51,7 +51,7 @@ Route::group(['as' => 'admin.', 'middleware' => ['auth', 'admin']], function()
 Route::group([], function()
 {
     Route::resource('users', 'UsersController')
-        ->only(['index', 'show', 'store', 'update']);
+        ->only(['index', 'show', 'store', 'update', 'destroy']);
 
     Route::delete(
         'users/{user}/password',

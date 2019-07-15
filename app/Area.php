@@ -3,10 +3,13 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Area extends Model
 {
+    use SoftDeletes;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -28,6 +31,7 @@ class Area extends Model
         'responsible_person_id',
         'created_at',
         'updated_at',
+        'deleted_at',
     ];
 
     /**

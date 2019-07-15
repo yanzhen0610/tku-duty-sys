@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Validator;
+use Illuminate\Database\QueryException;
 
 class UsersController extends Controller
 {
@@ -51,10 +52,11 @@ class UsersController extends Controller
                 $fields[$key] = $user->$key;
         if (Auth::user()->is_admin)
         {
-            $fields['update_url'] = route('users.update', $user['username']);
+            $fields['update_url'] = route('users.update', $user->username);
+            $fields['destroy_url'] = route('users.destroy', $user->username);
             $fields['reset_password'] = [
                 'url' => $user->status == User::$STATUS_RESET_PASSWORD_REQUESTED
-                    ? route('admin.changeUserPassword', $user['username']) : null,
+                    ? route('admin.changeUserPassword', $user->username) : null,
             ];
         }
         $fields['key'] = $user->username;
@@ -65,8 +67,11 @@ class UsersController extends Controller
     {
         $users_data = [
             'fields' => static::usersFields(),
-            'rows' => User::with(['isAdminEager', 'isDisabledEager'])->get()->map([static::class, 'userFilterOutFields'])->sortBy('is_disabled')->values(),
+            'rows' => User::with(['isAdminEager', 'isDisabledEager'])
+                ->get()->map([static::class, 'userFilterOutFields'])
+                ->sortBy('is_disabled')->values(),
             'editable' => Auth::user()->is_admin,
+            'destroyable' => Auth::user()->is_admin,
             'primary_key' => 'username',
         ];
         if (Auth::user()->is_admin)
@@ -176,8 +181,14 @@ class UsersController extends Controller
      */
     public function destroy(User $user)
     {
-        //
-        abort(404);
+        try
+        {
+            $user->delete();
+        }
+        catch (QueryException $e)
+        {
+            return response(null, 400);
+        }
     }
 
     public function resetPassword(User $user) {

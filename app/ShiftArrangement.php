@@ -2,11 +2,14 @@
 
 namespace App;
 
-use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class ShiftArrangement extends Model
 {
+    use SoftDeletes;
+
     /**
      * The table associated with the model.
      *
@@ -37,6 +40,7 @@ class ShiftArrangement extends Model
         'on_duty_staff_id',
         'created_at',
         'updated_at',
+        'deleted_at',
     ];
 
     /**

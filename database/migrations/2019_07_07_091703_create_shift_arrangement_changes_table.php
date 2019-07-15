@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateShiftsArrangementsTable extends Migration
+class CreateShiftArrangementChangesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,28 +13,25 @@ class CreateShiftsArrangementsTable extends Migration
      */
     public function up()
     {
-        Schema::create('shifts_arrangements', function (Blueprint $table) {
-            $table->bigIncrements('id');
-
+        Schema::create('shift_arrangement_changes', function (Blueprint $table) {
+            $table->bigIncrements('id')->index();
             $table->uuid('uuid')->unique()->index();
 
             $table->bigInteger('shift_id')->unsigned()->index();
-            $table->foreign('shift_id')->references('id')->on('shifts')
-                ->onDelete('restrict')->onUpdate('cascade');
-
+            $table->date('date')->index();
             $table->bigInteger('on_duty_staff_id')->unsigned()->index();
+            $table->bigInteger('changer_id')->unsigned()->index();
+            $table->boolean('is_locked')->index();
+            $table->boolean('is_up')->index();
+
+            $table->foreign('shift_id')->references('id')
+                ->on('shifts')->onDelete('restrict')->onUpdate('cascade');
             $table->foreign('on_duty_staff_id')->references('id')
                 ->on('users')->onDelete('restrict')->onUpdate('cascade');
-
-            $table->date('date')->index();
+            $table->foreign('changer_id')->references('id')
+                ->on('users')->onDelete('restrict')->onUpdate('cascade');
 
             $table->timestamps();
-            $table->softDeletes();
-
-            $table->unique(
-                ['shift_id', 'on_duty_staff_id', 'date', 'deleted_at'],
-                'shifts_arrangements_shift_on_duty_staff_date_deleted_at_unique'
-            );
         });
     }
 
@@ -45,6 +42,6 @@ class CreateShiftsArrangementsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('shifts_arrangements');
+        Schema::dropIfExists('shift_arrangement_changes');
     }
 }
