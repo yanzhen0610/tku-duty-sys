@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Validator;
-use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class UsersController extends Controller
 {
@@ -110,7 +111,13 @@ class UsersController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'username' => ['required', 'min:1', 'max:255', 'unique:users', 'regex:/^[^\/]+$/u'],
+            'username' => [
+                'required',
+                'min:1',
+                'max:255',
+                Rule::unique('users', 'username')->whereNull('deleted_at'),
+                'regex:/^[^\/]+$/u'
+            ],
             'display_name' => ['max:255'],
             'mobile_ext' => ['max:255'],
         ]);
