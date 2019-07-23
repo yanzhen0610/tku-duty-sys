@@ -50,16 +50,9 @@ class ShiftArrangementLock extends Model
      * @var array
      */
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
         'is_locked' => 'boolean',
     ];
-
-    /**
-     * The storage format of the model's date columns.
-     *
-     * @var string
-     */
-    // protected $dateFormat = 'Y-m-d';
 
     public function shift()
     {
