@@ -28,7 +28,7 @@ class ShiftArrangementLocksController extends Controller
     {
         $shifts = [];
 
-        $query = ShiftArrangementLock::whereBetween('date', [$from_date, $to_date]);
+        $query = ShiftArrangementLock::with(['shift'])->whereBetween('date', [$from_date, $to_date]);
 
         if ($shift)
         {
