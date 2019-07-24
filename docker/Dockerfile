@@ -1,34 +1,35 @@
 ################################################################################
 #
 # stage 0
+# fetch composer dependencies
+#
+################################################################################
+FROM composer
+
+RUN set -eux; \
+	apk add --no-cache libpng-dev; \
+	docker-php-ext-install gd; 
+
+COPY . /app
+
+RUN cd /app; \
+    composer install --optimize-autoloader --no-dev
+
+################################################################################
+#
+# stage 1 (from stage 0)
 # build Webpack things
 #
 ################################################################################
 FROM node
 
-COPY . /app
+COPY --from=0 /app /app
 
 RUN set -eux; \
 	cd /app; \
     npm install; \
     npm run production; \
     rm -fr node_modules docker .git
-
-################################################################################
-#
-# stage 1 (from stage 0)
-# fetch composer dependencies
-#
-################################################################################
-FROM composer
-
-COPY --from=0 /app /app
-
-RUN set -eux; \
-	apk add --no-cache libpng-dev; \
-	docker-php-ext-install gd; \
-	cd /app; \
-    composer install --optimize-autoloader --no-dev
 
 ################################################################################
 #
@@ -376,10 +377,6 @@ RUN set -eux; \
 #
 ################################################################################
 
-COPY --from=1 /app /app
-COPY docker/docker-entrypoint.sh /usr/local/bin
-COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY docker/nginx-default.conf /etc/nginx/conf.d/default.conf
 RUN set -eux; \
 	cat "${PHP_INI_DIR}/php.ini-production" |sed 's/\(^expose_php *= *\)On/\1Off/' >"${PHP_INI_DIR}/php.ini"; \
 	apk add --no-cache --virtual .dev-deps \
@@ -387,14 +384,19 @@ RUN set -eux; \
 		libpng-dev \
 	; \
 	apk add --no-cache libpng libzip; \
-	cd /app; \
-    chown -R www-data:www-data .; \
     docker-php-ext-install pdo_mysql gd zip; \
-	apk del .dev-deps; \
-    echo 'APP_KEY=' >.env; \
-    php artisan key:generate;
+	apk del .dev-deps;
+
+COPY docker/docker-entrypoint.sh /usr/local/bin
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/nginx-default.conf /etc/nginx/conf.d/default.conf
+COPY --from=1 /app /app
 
 WORKDIR /app
+
+RUN chown -R www-data:www-data .; \
+    echo 'APP_KEY=' >.env; \
+	php artisan key:generate;
 
 ENTRYPOINT [ "docker-entrypoint.sh" ]
 STOPSIGNAL SIGQUIT
