@@ -382,10 +382,15 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/nginx-default.conf /etc/nginx/conf.d/default.conf
 RUN set -eux; \
 	cat "${PHP_INI_DIR}/php.ini-production" |sed 's/\(^expose_php *= *\)On/\1Off/' >"${PHP_INI_DIR}/php.ini"; \
-	apk add --no-cache libzip-dev libpng-dev; \
+	apk add --no-cache --virtual .dev-deps \
+		libzip-dev \
+		libpng-dev \
+	; \
+	apk add --no-cache libpng libzip; \
 	cd /app; \
     chown -R www-data:www-data .; \
-    docker-php-ext-install pdo_mysql gd; \
+    docker-php-ext-install pdo_mysql gd zip; \
+	apk del .dev-deps; \
     echo 'APP_KEY=' >.env; \
     php artisan key:generate;
 

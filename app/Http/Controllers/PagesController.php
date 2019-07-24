@@ -94,12 +94,13 @@ class PagesController extends Controller
                     'method' => 'POST',
                 ],
             ],
+            'download_table_url' => route('shifts_arrangements.download_xlsx')
         ];
 
         return view('pages.shifts_arrangements_table', ['data' => $data]);
     }
 
-    public function shiftArrangementChangeLogs()
+    public function shiftArrangementChangeLogs(Request $request)
     {
     }
 

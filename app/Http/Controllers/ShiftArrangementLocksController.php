@@ -120,9 +120,10 @@ class ShiftArrangementLocksController extends Controller
 
         try
         {
-            $from_date = new Carbon($request->input('from_date'));
-            $to_date = new Carbon($request->input('to_date', $from_date));
-            $to_date->addDays(ShiftArrangementLocksController::$DEFAULT_DURATION_DAYS);
+            $time_now = now();
+            $from_date = new Carbon($request->input('from_date', $time_now));
+            $to_date = new Carbon($request->input('to_date', (new Carbon($time_now))
+                ->addDays(ShiftArrangementLocksController::$DEFAULT_DURATION_DAYS)));
         } catch (Exception $e)
         {
             abort(400);

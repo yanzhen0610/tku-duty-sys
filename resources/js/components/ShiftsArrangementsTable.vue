@@ -52,6 +52,14 @@
                   >{{ area.area_name || area.uuid }}</option>
                 </select>
               </div>
+              
+            </div>
+
+            <div class="field-body">
+              <a
+                v-bind:href="download_table_url"
+                class="button is-primary"
+              >{{ i18n['download_shifts_arrangements_table'] }}</a>
             </div>
           </div>
         </div>
@@ -416,6 +424,18 @@
       ]),
       read_only() {
         return this.$store.state.read_only;
+      },
+      download_table_url() {
+        let params = {
+          from_date: this.from_date,
+          to_date: this.to_date,
+        };
+        if (this.selectedArea != '__all__')
+          params.area = this.selectedArea;
+        let query = Object.keys(params).map(
+          k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k])
+        ).join('&');
+        return this.$store.state.download_table_url + '?' + query;
       },
       rows_data() {
         let rows_data = new Array();

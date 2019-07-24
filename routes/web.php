@@ -70,6 +70,11 @@ Route::resource('areas', 'AreasController')
 Route::resource('shifts_arrangements', 'ShiftsArrangementsController')
     ->only(['index', 'show', 'store', 'update', 'destroy']);
 
+Route::get(
+    'download_shifts_arrangements_xlsx',
+    'ShiftsArrangementsController@downloadShiftsArrangementsXlsx'
+)->name('shifts_arrangements.download_xlsx');
+
 Route::group(['as' => 'shift_arrangement_locks'], function()
 {
     Route::get(

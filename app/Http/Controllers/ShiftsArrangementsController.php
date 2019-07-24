@@ -14,12 +14,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Lang;
+
+use \Carbon\CarbonPeriod;
+use \Carbon\CarbonInterval;
+
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ShiftsArrangementsController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth'], ['except' => ['index', 'show']]);
+        $this->middleware(['auth'], ['except' => ['index', 'show', 'downloadShiftsArrangementsXlsx']]);
     }
 
     private static $DEFAULT_DURATION_DAYS = 30;
@@ -49,38 +56,8 @@ class ShiftsArrangementsController extends Controller
             ? $lock->is_locked : false;
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+    static function getShiftsArrangements($from_date, $to_date, $area, $shift)
     {
-        $validator = Validator::make($request->all(), [
-            'from_date' => ['date_format:Y-m-d'],
-            'to_date' => ['date_format:Y-m-d'],
-            'area' => ['exists:areas,uuid'],
-            'shift' => ['exists:shifts,uuid'],
-        ]);
-
-        if ($validator->fails())
-            return response()->json($validator->messages(), 400);
-
-        try
-        {
-            $from_date = new Carbon($request->input('from_date'));
-            $to_date = new Carbon($request->input('to_date', $from_date));
-            $to_date->addDays(ShiftsArrangementsController::$DEFAULT_DURATION_DAYS);
-        } catch (Exception $e)
-        {
-            abort(400);
-        }
-        $from_date = $from_date->startOfWeek(ShiftsArrangementsController::$START_OF_WEEK);
-        $to_date = $to_date->endOfWeek(ShiftsArrangementsController::$END_OF_WEEK);
-        $area = $request->input('area');
-        $shift = $request->input('shift');
-
         $query = ShiftArrangement::with(
             ['shift', 'onDutyStaff' => function ($query) {
                 $query->withTrashed(); // show deleted staves
@@ -129,6 +106,215 @@ class ShiftsArrangementsController extends Controller
         }
 
         return $query->get();
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'from_date' => ['date_format:Y-m-d'],
+            'to_date' => ['date_format:Y-m-d'],
+            'area' => ['exists:areas,uuid'],
+            'shift' => ['exists:shifts,uuid'],
+        ]);
+
+        if ($validator->fails())
+            return response()->json($validator->messages(), 400);
+
+        try
+        {
+            $time_now = now();
+            $from_date = new Carbon($request->input('from_date', $time_now));
+            $to_date = new Carbon($request->input('to_date', (new Carbon($time_now))
+                ->addDays(ShiftsArrangementsController::$DEFAULT_DURATION_DAYS)));
+        } catch (Exception $e)
+        {
+            abort(400);
+        }
+        $from_date = $from_date->startOfWeek(ShiftsArrangementsController::$START_OF_WEEK);
+        $to_date = $to_date->endOfWeek(ShiftsArrangementsController::$END_OF_WEEK);
+        $area = $request->input('area');
+        $shift = $request->input('shift');
+
+        return ShiftsArrangementsController::getShiftsArrangements($from_date, $to_date, $area, $shift);
+    }
+
+    /**
+     * Download shifts arrangements xlsx file.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function downloadShiftsArrangementsXlsx(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'from_date' => ['date_format:Y-m-d'],
+            'to_date' => ['date_format:Y-m-d'],
+            'area' => ['exists:areas,uuid'],
+            'shift' => ['exists:shifts,uuid'],
+        ]);
+
+        if ($validator->fails())
+            return response()->json($validator->messages(), 400);
+
+        try
+        {
+            $time_now = now();
+            $from_date = new Carbon($request->input('from_date', $time_now));
+            $to_date = new Carbon($request->input('to_date', (new Carbon($time_now))
+                ->addDays(ShiftsArrangementsController::$DEFAULT_DURATION_DAYS)));
+        } catch (Exception $e)
+        {
+            abort(400);
+        }
+        $from_date = $from_date->startOfWeek(ShiftsArrangementsController::$START_OF_WEEK);
+        $to_date = $to_date->endOfWeek(ShiftsArrangementsController::$END_OF_WEEK);
+        $area_uuid = $request->input('area');
+        $shift = $request->input('shift');
+
+        $arrangements = ShiftsArrangementsController::getShiftsArrangements($from_date, $to_date, $area_uuid, $shift);
+        $shifts = ShiftsArrangementsController::getShifts($shift, $area_uuid);
+        $spreadsheet = ShiftsArrangementsController::prepareShiftsArrangementsSpreadsheet($from_date, $to_date, $arrangements, $shifts);
+        $writer = new Xlsx($spreadsheet);
+        $temporary_file_name = tempnam(realpath(sys_get_temp_dir()), 'shifts_arrangements_xlsx_');
+        $writer->save($temporary_file_name);
+
+        return response()->download(
+            $temporary_file_name,
+            sprintf(
+                'shifts_arrangements_%s_%s%s.xlsx',
+                $from_date->format('Y-m-d'),
+                $to_date->format('Y-m-d'),
+                $area_uuid ? '_'.Area::where('uuid', $area_uuid)->first()->area_name : ''
+            )
+        )->deleteFileAfterSend();
+    }
+
+    private static function getShifts($shift_uuid, $area_uuid)
+    {
+        $query = Shift::query();
+
+        if ($shift_uuid)
+        {
+            $query = $query->where('uuid', $shift_uuid);
+        }
+        else if ($area_uuid)
+        {
+            $query = $query->where('area_id', function ($query) use ($area_uuid)
+            {
+                $query->select('id')->from('areas')->where('uuid', $area_uuid);
+            });
+        }
+
+        return $query->get();
+    }
+
+    private static function prepareShiftsArrangementsSpreadsheet($from_date, $to_date, $arrangements, $shifts)
+    {
+        $kv_arrangements = array(); // array[shift ID][unix timestamp]
+        $period = new CarbonPeriod($from_date, $to_date, CarbonInterval::days());
+
+        foreach ($shifts as $key => $shift) foreach ($period as $date)
+            $kv_arrangements[$shift->id][$date->timestamp] = array();
+
+        foreach ($arrangements as $key => $arrangement)
+            array_push($kv_arrangements[$arrangement->shift_id][$arrangement->date->timestamp], $arrangement);
+
+        $from_week = intdiv(intdiv($from_date->timestamp, 86400) + 4, 7);
+        $to_week = intdiv(intdiv($to_date->timestamp, 86400) + 4, 7);
+
+        $spreadsheet = new Spreadsheet();
+
+        $sheet = $spreadsheet->getActiveSheet();
+
+        for ($i = 1; $i < 9; ++$i)
+            $sheet->getColumnDimensionByColumn($i)->setAutoSize(true);
+
+        # set title
+        $sheet->getCellByColumnAndRow(1, 1)
+            ->setValue(Lang::get('ui.week_days'))->getStyle()->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('a3cbfa');
+        $sheet->getCellByColumnAndRow(2, 1)
+            ->setValue(Lang::get('ui.sunday'))->getStyle()->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('c0c0c0');
+        $sheet->getCellByColumnAndRow(3, 1)
+            ->setValue(Lang::get('ui.monday'))->getStyle()->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('f8cda1');
+        $sheet->getCellByColumnAndRow(4, 1)
+            ->setValue(Lang::get('ui.tuesday'))->getStyle()->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('f8cda1');
+        $sheet->getCellByColumnAndRow(5, 1)
+            ->setValue(Lang::get('ui.wednesday'))->getStyle()->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('f8cda1');
+        $sheet->getCellByColumnAndRow(6, 1)
+            ->setValue(Lang::get('ui.thursday'))->getStyle()->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('f8cda1');
+        $sheet->getCellByColumnAndRow(7, 1)
+            ->setValue(Lang::get('ui.friday'))->getStyle()->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('f8cda1');
+        $sheet->getCellByColumnAndRow(8, 1)
+            ->setValue(Lang::get('ui.saturday'))->getStyle()->getFill()
+            ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+            ->getStartColor()->setRGB('c0c0c0');
+
+        $row_index = 2; // the title is 1
+
+        for ($week = $from_week; $week <= $to_week; ++$week)
+        {
+            $sheet->getCellByColumnAndRow(1, $row_index)
+                ->setValue(Lang::get('ui.date'))->getStyle()->getFill()
+                ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                ->getStartColor()->setRGB('a3cbfa');
+
+            // week title
+            for ($week_day = 0; $week_day < 7; ++$week_day)
+            {
+                $date = new Carbon(($week * 7 + $week_day - 4) * 86400);
+                $sheet->getCellByColumnAndRow($week_day + 2, $row_index)
+                    ->setValue($date->format('Y-m-d'))
+                    ->getStyle()->getFill()
+                    ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                    ->getStartColor()->setRGB(
+                        $week_day == 0 || $week_day == 6 ? 'd9d9d9' : 'f8cda1'
+                    );
+            }
+            $row_index += 1;
+
+            // shifts
+            foreach ($shifts as $key => $shift)
+            {
+                $sheet->getCellByColumnAndRow(1, $row_index)->setValue($shift->shift_name);
+                $shift_arrangements = $kv_arrangements[$shift->id];
+                for ($week_day = 0; $week_day < 7; ++$week_day)
+                {
+                    $names = array();
+                    foreach ($shift_arrangements[($week * 7 + $week_day - 4) * 86400] as $key => $arrangement)
+                    {
+                        $staff = $arrangement->onDutyStaff;
+                        $staff_name = $staff->display_name == null ? $staff->username : $staff->display_name;
+                        array_push($names, $staff_name);
+                    }
+                    $cell_value = join("\n", $names);
+                    $sheet->setCellValueByColumnAndRow($week_day + 2, $row_index, $cell_value);
+                }
+                $sheet->getRowDimension($row_index)->setZeroHeight(true);
+                $row_index += 1;
+            }
+        }
+
+        return $spreadsheet;
     }
 
     /**

@@ -60,4 +60,5 @@ return [
     'user_profile' => '用戶用戶',
     'user_basic_info' => '用戶基本資料',
     'not_set' => '未設定',
+    'download_shifts_arrangements_table' => '下載班表',
 ];
