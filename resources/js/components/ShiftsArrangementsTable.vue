@@ -196,7 +196,7 @@
                     }"
                     v-on:click="set_lock_state({
                       date: day_data.title,
-                      shifts: shifts.map(x => x.uuid),
+                      shifts: displaying_shifts_uuids,
                       lock: !day_data.is_locked,
                     })"
                     class="icon-wrapper"
@@ -424,6 +424,15 @@
       ]),
       read_only() {
         return this.$store.state.read_only;
+      },
+      displaying_shifts_uuids() {
+        if (this.selectedArea == '__all__')
+          return this.$store.state.shifts.map(x => x.uuid);
+        let selected_area_uuid = this.selectedArea;
+        let selected_area = this.$store.state.areas.find(
+          x => x.uuid == selected_area_uuid
+        );
+        return selected_area.shifts.map(x => x.uuid);
       },
       download_table_url() {
         let params = {

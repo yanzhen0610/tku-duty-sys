@@ -220,9 +220,9 @@ class ShiftArrangementLocksController extends Controller
 
         $lock = $request->input('lock');
         $date = $request->input('date');
-        $area = $request->input('area');
-        $shift = $request->input('shift');
-        $shifts_list = $request->input('shifts');
+        $area_uuid = $request->input('area');
+        $shift_uuid = $request->input('shift');
+        $shifts_uuids = $request->input('shifts');
 
         if ($date)
         {
@@ -238,19 +238,19 @@ class ShiftArrangementLocksController extends Controller
 
         $shifts = [];
 
-        if ($shifts)
+        if ($shifts_uuids)
         {
-            $shifts = Shift::with('area')->whereIn('uuid', $shifts_list)->get();
+            $shifts = Shift::with('area')->whereIn('uuid', $shifts_uuids)->get();
         }
-        else if ($shift)
+        else if ($shift_uuid)
         {
-            $shifts = Shift::with('area')->where('uuid', $shift)->get();
+            $shifts = Shift::with('area')->where('uuid', $shift_uuid)->get();
         }
-        else if ($area)
+        else if ($area_uuid)
         {
-            $shifts = Shift::with('area')->where('area_id', function ($query) use ($area)
+            $shifts = Shift::with('area')->where('area_id', function ($query) use ($area_uuid)
             {
-                $query->select('id')->from((new Area())->getTable())->where('uuid', $area);
+                $query->select('id')->from((new Area())->getTable())->where('uuid', $area_uuid);
             })->get();
         }
         else
