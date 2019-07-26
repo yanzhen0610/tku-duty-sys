@@ -2,7 +2,8 @@
     <div class="container">
         <div class="navbar-brand">
             <a class="navbar-item" href="{{ route('home') }}">
-                <img src="{{ asset('images/logo.jpg') }}" width="28" height="28">
+                <img src="{{ asset('images/logo.svg') }}" width="28" height="28"
+                    title="@lang('ui.home')" alt="@lang('ui.home')">
             </a>
 
             <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbar">
