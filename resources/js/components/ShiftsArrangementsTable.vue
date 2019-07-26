@@ -164,7 +164,7 @@
                         'lock-icon-wrapper': day_data.is_locked,
                         'cursor-pointer': !read_only,
                       }"
-                      v-on:click="set_lock_state({
+                      v-on:click.stop="set_lock_state({
                         date: day_data.date,
                         shift: row_data.shift.uuid,
                         lock: !day_data.is_locked,
