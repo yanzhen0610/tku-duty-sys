@@ -385,7 +385,11 @@ RUN set -eux; \
 	; \
 	apk add --no-cache libpng libzip; \
     docker-php-ext-install pdo_mysql gd zip; \
-	apk del .dev-deps;
+	apk del .dev-deps; \
+	apk add --no-cache --virtual .phpize-deps $PHPIZE_DEPS; \
+	pecl install -o -f igbinary redis; \
+	docker-php-ext-enable igbinary redis; \
+	apk del --no-network .phpize-deps
 
 COPY docker/docker-entrypoint.sh /usr/local/bin
 COPY docker/nginx.conf /etc/nginx/nginx.conf
