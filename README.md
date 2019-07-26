@@ -57,3 +57,21 @@ docker run -d --restart always -p port:80 \
     --env APP_DEBUG=false \
     image-name
 ```
+
+### run (with redis)
+
+```sh
+docker run -d --restart always -p port:80 \
+    --env DB_CONNECTION=mysql \
+    --env DB_HOST=mysql \
+    --env DB_PORT=3306 \
+    --env DB_DATABASE=database \
+    --env DB_USERNAME=username \
+    --env DB_PASSWORD=password \
+    --env REDIS_HOST=redis_hostname \
+    --env SESSION_DRIVER=redis \
+    --env APP_ENV=production \
+    --env APP_NAME=app_name \
+    --env APP_DEBUG=false \
+    image-name
+```
