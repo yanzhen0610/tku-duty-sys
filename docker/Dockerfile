@@ -12,7 +12,9 @@ RUN set -eux; \
 
 COPY . /app
 
-RUN cd /app; \
+RUN set -eux; \
+	cd /app; \
+	rm -fr docker .git; \
     composer install --optimize-autoloader --no-dev
 
 ################################################################################
@@ -29,7 +31,7 @@ RUN set -eux; \
 	cd /app; \
     npm install; \
     npm run production; \
-    rm -fr node_modules docker .git
+    rm -fr node_modules
 
 ################################################################################
 #
