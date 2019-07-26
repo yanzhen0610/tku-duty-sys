@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use \App\{Area, Shift, User, ShiftArrangement, ShiftArrangementLock};
+use \App\{Area, Shift, User, ShiftArrangement, ShiftArrangementLock, ShiftArrangementChange};
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class PagesController extends Controller
 {
@@ -100,8 +101,25 @@ class PagesController extends Controller
         return view('pages.shifts_arrangements_table', ['data' => $data]);
     }
 
-    public function shiftArrangementChangeLogs(Request $request)
+    public function shiftsArrangementsChanges()
     {
+        $a_week_ago = now()->addDays(-7);
+        $changes = ShiftArrangementChange::with(
+            [
+                'changer' => function ($query) { $query->withTrashed(); },
+                'onDutyStaff' => function ($query) { $query->withTrashed(); },
+                'shift' => function ($query) { $query->withTrashed(); },
+            ])
+            ->where('is_locked', true)
+            ->where(function ($query) use ($a_week_ago)
+            {
+                $query->orWhere('created_at', '>=', $a_week_ago)
+                    ->orWhere('date', '>=', $a_week_ago);
+            })->get();
+        $changes->sortBy('created_at');
+        return view('pages.shifts_arrangements_changes', [
+            'changes' => $changes,
+        ]);
     }
 
 }

@@ -61,4 +61,8 @@ return [
     'user_basic_info' => '用戶基本資料',
     'not_set' => '未設定',
     'download_shifts_arrangements_table' => '下載班表',
+    'changer' => '異動操作者',
+    'event_timestamp' => '事件發生時間',
+    'status' => '狀態',
+    'shifts_arrangements_changes' => '班表異動',
 ];

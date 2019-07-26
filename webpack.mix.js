@@ -19,3 +19,5 @@ mix.sass('resources/sass/materialize/sass/checkboxes.scss', 'public/css/material
 
 mix.js('resources/js/edit-table.js', 'public/js').version();
 mix.js('resources/js/shifts-arrangements.js', 'public/js').version();
+
+mix.copy('node_modules/list.js/dist/list.min.js', 'public/js').version();

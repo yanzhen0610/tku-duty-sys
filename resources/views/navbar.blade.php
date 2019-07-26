@@ -25,6 +25,13 @@
                 </a>
 
                 @if (Auth::check())
+                
+                @if (Auth::user()->is_admin)
+                <a class="navbar-item" href="{{ route('pages.shifts_arrangements_changes') }}">
+                    @lang('ui.shifts_arrangements_changes')
+                </a>
+                @endif
+
                 <a class="navbar-item" href="{{ route('pages.areas') }}">
                     @if (Auth::user()->is_admin)
                         @lang('ui.areas_management')

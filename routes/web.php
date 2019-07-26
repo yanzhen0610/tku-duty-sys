@@ -109,4 +109,9 @@ Route::group(['as' => 'pages.'], function()
         'shifts_arrangements_table',
         'PagesController@shiftsArrangementsTable'
     )->name('shifts_arrangements_table');
+
+    Route::get(
+        'shifts_arrangements_changes',
+        'PagesController@shiftsArrangementsChanges'
+    )->name('shifts_arrangements_changes');
 });
