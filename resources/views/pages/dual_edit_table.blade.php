@@ -18,7 +18,7 @@ $table_b_data['ui_i18n'] = __('ui');
     </div>
 </div>
 
-<script src="{{ mix('js/edit-table.js') }}" type="text/javascript"></script>
+<script src="{{ url(mix('js/edit-table.js')) }}" type="text/javascript"></script>
 <script>
     var table_a_data = @json($table_a_data);
     var table_b_data = @json($table_b_data);

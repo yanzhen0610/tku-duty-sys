@@ -2,7 +2,7 @@
 
 @section('content')
 
-<script src="{{ mix('js/list.min.js') }}"></script>
+<script src="{{ url(mix('js/list.min.js')) }}"></script>
 
 <table id="changes" class="table is-striped is-hoverable">
     <thead>
