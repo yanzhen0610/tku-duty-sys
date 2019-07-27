@@ -27,10 +27,16 @@ class RouteServiceProvider extends ServiceProvider
         //
 
         parent::boot();
-        
+
         if (env('APP_URL', null) != null)
         {
-            URL::forceRootUrl(env('APP_URL'));
+            $app_url = env('APP_URL');
+            $parsed_url = parse_url($app_url);
+            if (array_has($parsed_url, 'scheme') && $parsed_url['scheme'] == 'https')
+            {
+                URL::forceScheme('https');
+            }
+            URL::forceRootUrl($app_url);
         }
     }
 
