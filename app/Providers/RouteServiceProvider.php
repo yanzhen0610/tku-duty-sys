@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 
 class RouteServiceProvider extends ServiceProvider
@@ -26,6 +27,11 @@ class RouteServiceProvider extends ServiceProvider
         //
 
         parent::boot();
+        
+        if (env('APP_URL', null) != null)
+        {
+            URL::forceRootUrl(env('APP_URL'));
+        }
     }
 
     /**
