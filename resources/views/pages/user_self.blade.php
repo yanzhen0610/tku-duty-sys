@@ -1,5 +1,7 @@
 @extends('layout')
 
+@section('title', Lang::get('ui.user_profile'))
+
 @section('content')
 
 <div class="columns is-centered">

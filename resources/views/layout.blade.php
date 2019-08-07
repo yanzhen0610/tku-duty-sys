@@ -18,7 +18,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title')</title>
+    <title>@yield('title', isset($title) ? $title : config('app.name'))</title>
     @includeFirst(['default-fonts-'.Config::get('app.locale'), 'default-fonts-zh'])
     <link rel="stylesheet" href="{{ url(mix('css/bulma.css')) }}">
     <link rel="stylesheet" href="{{ url(mix('css/materialize/checkboxes.css')) }}">

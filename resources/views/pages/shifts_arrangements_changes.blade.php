@@ -1,5 +1,7 @@
 @extends('layout')
 
+@section('title', Lang::get('ui.shifts_arrangements_changes'))
+
 @section('content')
 
 <script src="{{ url(mix('js/list.min.js')) }}"></script>

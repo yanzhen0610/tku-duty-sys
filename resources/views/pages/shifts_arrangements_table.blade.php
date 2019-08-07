@@ -1,5 +1,7 @@
 @extends('layout')
 
+@section('title', Lang::get('ui.shifts_arrangements_table'))
+
 @php
 
 $data['i18n'] = __('ui');

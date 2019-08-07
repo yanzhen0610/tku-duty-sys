@@ -6,6 +6,7 @@ use \App\{Area, Shift, User, ShiftArrangement, ShiftArrangementLock, ShiftArrang
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Validator;
 
 class PagesController extends Controller
@@ -18,19 +19,22 @@ class PagesController extends Controller
     public function users()
     {
         $table_data = UsersController::getUsersData();
-        return view('pages.edit_table', compact(['table_data']));
+        $title = Auth::user()->is_admin ? Lang::get('ui.users_management') : Lang::get('ui.users');
+        return view('pages.edit_table', compact(['title', 'table_data']));
     }
 
     public function areas()
     {
         $table_data = AreasController::getAreasData();
-        return view('pages.edit_table', compact(['table_data']));
+        $title = Auth::user()->is_admin ? Lang::get('ui.areas_management') : Lang::get('ui.areas');
+        return view('pages.edit_table', compact(['title', 'table_data']));
     }
 
     public function shifts()
     {
         $table_data = ShiftsController::getShiftsData();
-        return view('pages.edit_table', compact(['table_data']));
+        $title = Auth::user()->is_admin ? Lang::get('ui.shifts_management') : Lang::get('ui.shifts');
+        return view('pages.edit_table', compact(['title', 'table_data']));
     }
 
     public function shiftsArrangementsTable()
