@@ -1,3 +1,6 @@
 [submodule "resources/sass/bulma"]
 	path = resources/sass/bulma
 	url = https://github.com/jgthms/bulma
+[submodule "resources/sass/materialize"]
+	path = resources/sass/materialize
+	url = https://github.com/Dogfalo/materialize
