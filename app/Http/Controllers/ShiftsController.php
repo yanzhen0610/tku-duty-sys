@@ -62,8 +62,9 @@ class ShiftsController extends Controller
     {
         $shifts_data = [
             'fields' => ShiftsController::shiftsFields(),
-            'rows' => Shift::with('area')->get()
-                ->map([ShiftsController::class, 'shiftFilterOutFields']),
+            'rows' => Shift::with([
+                'area' => function ($query) { $query->withTrashed(); },
+            ])->get()->map([ShiftsController::class, 'shiftFilterOutFields']),
             'primary_key' => 'shift_name',
         ];
         if (Auth::user()->is_admin)

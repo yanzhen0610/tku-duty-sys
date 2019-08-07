@@ -58,51 +58,39 @@ class ShiftsArrangementsController extends Controller
 
     static function getShiftsArrangements($from_date, $to_date, $area, $shift)
     {
-        $query = ShiftArrangement::with(
-            ['shift', 'onDutyStaff' => function ($query) {
-                $query->withTrashed(); // show deleted staves
-            }]);
-        $query = $query->whereIn('shift_id', function ($query)
-        {
-            $query->select('id')->from((new Shift())->getTable())
-                ->whereNull('deleted_at')
-                ->whereIn('area_id', function ($query) {
-                    $query->select('id')->from((new Area())->getTable())
-                        ->whereNull('deleted_at');
-                });
-        });
-        $query = $query->whereBetween('date', [$from_date, $to_date]);
+        $query = ShiftArrangement::with([
+            'shift' => function ($query) { $query->withTrashed(); },
+            'onDutyStaff' => function ($query) { $query->withTrashed(); },
+        ])->whereBetween('date', [$from_date, $to_date]);
+        
         if ($area)
         {
-            $query = $query->whereIn(
-                'shift_id',
-                function($query) use ($area)
-                {
-                    $query->select('id')
-                        ->from((new Shift())->getTable())
-                        ->where(
-                            'area_id',
-                            function($query) use ($area)
-                            {
-                                $query->select('id')
-                                    ->from((new Area())->getTable())
-                                    ->where('uuid', $area);
-                            }
-                        );
-                }
-            );
+            $query = $query->whereIn('shift_id', function($query) use ($area) {
+                $query->select('id')->from((new Shift())->getTable())
+                    ->whereNull('deleted_at')
+                    ->where('area_id', function($query) use ($area) {
+                        $query->select('id')->from((new Area())->getTable())
+                            ->where('uuid', $area);
+                    });
+            });
         }
-        if ($shift)
+        else if ($shift)
         {
-            $query = $query->where(
-                'shift_id',
-                function ($query) use ($shift)
-                {
-                    $query->select('id')
-                        ->from((new Shift())->getTable())
-                        ->where('uuid', $shift);
-                }
-            );
+            $query = $query->where('shift_id', function ($query) use ($shift) {
+                $query->select('id')->from((new Shift())->getTable())
+                    ->where('uuid', $shift);
+            });
+        }
+        else
+        {
+            $query = $query->whereIn('shift_id', function ($query) {
+                $query->select('id')->from((new Shift())->getTable())
+                    ->whereNull('deleted_at')
+                    ->whereIn('area_id', function ($query) {
+                        $query->select('id')->from((new Area())->getTable())
+                            ->whereNull('deleted_at');
+                    });
+            });
         }
 
         return $query->get();

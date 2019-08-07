@@ -28,11 +28,13 @@ class ShiftArrangementLocksController extends Controller
     {
         $shifts = [];
 
-        $query = ShiftArrangementLock::with(['shift'])->whereBetween('date', [$from_date, $to_date]);
+        $query = ShiftArrangementLock::with([
+            'shift' => function ($query) { $query->withTrashed(); },
+        ])->whereBetween('date', [$from_date, $to_date]);
 
         if ($shift)
         {
-            $shifts = Shift::where('uuid', $shift)->get(); // cound be used by foreach syntax
+            $shifts = Shift::where('uuid', $shift)->withTrashed()->get(); // could be used by foreach syntax
 
             $query = $query->where(
                 'shift_id',
@@ -240,11 +242,11 @@ class ShiftArrangementLocksController extends Controller
 
         if ($shifts_uuids)
         {
-            $shifts = Shift::with('area')->whereIn('uuid', $shifts_uuids)->get();
+            $shifts = Shift::with('area')->withTrashed()->whereIn('uuid', $shifts_uuids)->get();
         }
         else if ($shift_uuid)
         {
-            $shifts = Shift::with('area')->where('uuid', $shift_uuid)->get();
+            $shifts = Shift::with('area')->withTrashed()->where('uuid', $shift_uuid)->get();
         }
         else if ($area_uuid)
         {
@@ -255,7 +257,7 @@ class ShiftArrangementLocksController extends Controller
         }
         else
         {
-            $shifts = Shift::all();
+            $shifts = Shift::with('area');
         }
 
         $locks = [];
@@ -265,7 +267,8 @@ class ShiftArrangementLocksController extends Controller
         {
             foreach ($period as $date)
             {
-                if (Auth::user()->is_admin || $shift->area->responsible_person_id == Auth::user()->id)
+                if (Auth::user()->is_admin || (
+                        $shift->area && $shift->area->responsible_person_id == Auth::user()->id))
                     $locks[$shift->uuid][$date->format('Y-m-d')] = ShiftArrangementLock::updateOrCreate(
                         [
                             'date' => $date->format('Y-m-d'),
