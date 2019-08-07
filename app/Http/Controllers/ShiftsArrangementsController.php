@@ -175,7 +175,9 @@ class ShiftsArrangementsController extends Controller
         return response()->download(
             $temporary_file_name,
             sprintf(
-                'shifts_arrangements_%s_%s%s.xlsx',
+                '%s_%s_%s_%s%s.xlsx',
+                config('app.name'),
+                Lang::get('ui.shifts_arrangements_table'),
                 $from_date->format('Y-m-d'),
                 $to_date->format('Y-m-d'),
                 $area_uuid ? '_'.Area::where('uuid', $area_uuid)->first()->area_name : ''
