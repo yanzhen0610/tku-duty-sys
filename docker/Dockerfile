@@ -1,6 +1,23 @@
 ################################################################################
 #
 # stage 0
+# build Webpack things
+#
+################################################################################
+FROM node
+
+COPY . /app
+
+RUN set -eux; \
+	cd /app; \
+    npm install; \
+    npm run production; \
+    rm -fr node_modules .git
+
+
+################################################################################
+#
+# stage 1 (from stage 0)
 # fetch composer dependencies
 #
 ################################################################################
@@ -10,28 +27,13 @@ RUN set -eux; \
 	apk add --no-cache libpng-dev; \
 	docker-php-ext-install gd; 
 
-COPY . /app
-
-RUN set -eux; \
-	cd /app; \
-	rm -fr docker .git; \
-    composer install --optimize-autoloader --no-dev
-
-################################################################################
-#
-# stage 1 (from stage 0)
-# build Webpack things
-#
-################################################################################
-FROM node
-
 COPY --from=0 /app /app
 
 RUN set -eux; \
 	cd /app; \
-    npm install; \
-    npm run production; \
-    rm -fr node_modules
+	rm -fr docker; \
+    composer install --optimize-autoloader --no-dev
+
 
 ################################################################################
 #
@@ -40,10 +42,20 @@ RUN set -eux; \
 ################################################################################
 FROM alpine:3.10
 
+
+################################################################################
+#
+# Nginx 1.17.2
+# modified from:
+# https://github.com/nginxinc/docker-nginx/blob/c817e28dd68b6daa33265a8cb527b1c4cd723b59/mainline/alpine/Dockerfile
+#
+################################################################################
+
+ENV NGINX_VERSION 1.17.2
+ENV NJS_VERSION   0.3.3
+ENV PKG_RELEASE   1
+
 RUN set -x \
-    && NGINX_VERSION=1.17.1 \
-    && NJS_VERSION=0.3.3 \
-    && PKG_RELEASE=1 \
 # create nginx user/group first, to be consistent throughout docker variants
     && addgroup -g 101 -S nginx \
     && adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx \
@@ -150,9 +162,9 @@ RUN set -x \
 
 ################################################################################
 #
-# PHP-FPM 7.3.7
+# PHP-FPM 7.3.8
 # modified from:
-# https://github.com/docker-library/php/blob/30447e37518681136496279034102e6ee505f5cd/7.3/alpine3.10/fpm/Dockerfile
+# https://github.com/docker-library/php/blob/135204c0f4c7a255ee70ec82dc1133929f9676c0/7.3/alpine3.10/fpm/Dockerfile
 #
 ################################################################################
 
@@ -212,9 +224,9 @@ ENV PHP_LDFLAGS="-Wl,-O1 -Wl,--hash-style=both -pie"
 
 ENV GPG_KEYS CBAF69F173A0FEA4B537F470D66C9593118BCCB6 F38252826ACD957EF380D39F2F7956BC5DA04B5D
 
-ENV PHP_VERSION 7.3.7
-ENV PHP_URL="https://www.php.net/get/php-7.3.7.tar.xz/from/this/mirror" PHP_ASC_URL="https://www.php.net/get/php-7.3.7.tar.xz.asc/from/this/mirror"
-ENV PHP_SHA256="ba067200ba649956b3a92ec8b71a6ed8ce8a099921212443c1bcf3260a29274c" PHP_MD5=""
+ENV PHP_VERSION 7.3.8
+ENV PHP_URL="https://www.php.net/get/php-7.3.8.tar.xz/from/this/mirror" PHP_ASC_URL="https://www.php.net/get/php-7.3.8.tar.xz.asc/from/this/mirror"
+ENV PHP_SHA256="f6046b2ae625d8c04310bda0737ac660dc5563a8e04e8a46c1ee24ea414ad5a5" PHP_MD5=""
 
 RUN set -eux; \
 	\
@@ -296,7 +308,7 @@ RUN set -eux; \
 		\
 # bundled pcre does not support JIT on s390x
 # https://manpages.debian.org/stretch/libpcre3-dev/pcrejit.3.en.html#AVAILABILITY_OF_JIT_SUPPORT
-		$(test "$gnuArch" = 's390x-linux-gnu' && echo '--without-pcre-jit') \
+		$(test "$gnuArch" = 's390x-linux-musl' && echo '--without-pcre-jit') \
 		\
 		${PHP_EXTRA_CONFIGURE_ARGS:-} \
 	; \
