@@ -140,7 +140,10 @@ return [
     |
     */
 
-    'path' => parse_url(env('APP_URL', '/'))['path'],
+    'path' => array_merge(
+        ['path' => '/'], // for `parse_url` return array doesn't contains key `path`
+        parse_url(env('APP_URL', '/'))
+    )['path'],
 
     /*
     |--------------------------------------------------------------------------
