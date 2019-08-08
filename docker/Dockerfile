@@ -12,7 +12,7 @@ RUN set -eux; \
 	cd /app; \
     npm install; \
     npm run production; \
-    rm -fr node_modules .git
+    rm -fr node_modules .git tests
 
 
 ################################################################################
