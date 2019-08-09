@@ -102,7 +102,7 @@ class PagesController extends Controller
             'download_table_url' => route('shifts_arrangements.download_xlsx')
         ];
 
-        return view('pages.shifts_arrangements_table', ['data' => $data]);
+        return view('pages.shifts_arrangements_table', compact(['data']));
     }
 
     public function shiftsArrangementsChanges()
@@ -119,11 +119,10 @@ class PagesController extends Controller
             {
                 $query->orWhere('created_at', '>=', $a_week_ago)
                     ->orWhere('date', '>=', $a_week_ago);
-            })->get();
-        $changes->sortBy('created_at');
-        return view('pages.shifts_arrangements_changes', [
-            'changes' => $changes,
-        ]);
+            })
+            ->get()->sortByDesc('created_at');
+
+        return view('pages.shifts_arrangements_changes', compact(['changes']));
     }
 
 }

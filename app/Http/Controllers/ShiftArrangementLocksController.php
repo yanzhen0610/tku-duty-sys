@@ -36,41 +36,25 @@ class ShiftArrangementLocksController extends Controller
         {
             $shifts = Shift::where('uuid', $shift)->withTrashed()->get(); // could be used by foreach syntax
 
-            $query = $query->where(
-                'shift_id',
-                function ($query) use ($shift)
-                {
-                    $query->select('id')
-                        ->from((new Shift())->getTable())
-                        ->where('uuid', $shift);
-                }
-            );
+            $query = $query->where('shift_id', function ($query) use ($shift) {
+                $query->select('id')->from((new Shift())->getTable())
+                    ->where('uuid', $shift);
+            });
         }
         else if ($area)
         {
-            $shifts = Shift::where('area_id', function ($query) use ($area)
-            {
+            $shifts = Shift::where('area_id', function ($query) use ($area) {
                 $query->select('id')->from((new Area())->getTable())
                     ->where('uuid', $area);
             })->get();
 
-            $query = $query->whereIn(
-                'shift_id',
-                function($query) use ($area)
-                {
-                    $query->select('id')
-                        ->from((new Shift())->getTable())
-                        ->where(
-                            'area_id',
-                            function($query) use ($area)
-                            {
-                                $query->select('id')
-                                    ->from((new Area())->getTable())
-                                    ->where('uuid', $area);
-                            }
-                        );
-                }
-            );
+            $query = $query->whereIn('shift_id', function($query) use ($area) {
+                $query->select('id')->from((new Shift())->getTable())
+                    ->where('area_id', function($query) use ($area) {
+                        $query->select('id')->from((new Area())->getTable())
+                            ->where('uuid', $area);
+                    });
+            });
         }
         else
         {
@@ -87,11 +71,23 @@ class ShiftArrangementLocksController extends Controller
 
         $query->get()->each(function ($item, $key) use (&$locks, $time_now)
         {
-            if ($item->date > $time_now || $item->updated_at > $item->date)
+            if (static::isValidLock($item, $time_now))
                 $locks[$item->shift->uuid][$item->date->format('Y-m-d')] = $item->is_locked;
         });
 
         return $locks;
+    }
+
+    static function isValidLock(?ShiftArrangementLock $lock, Carbon $time_now = null)
+    {
+        if ($time_now == null) $time_now = now();
+        if ($lock == null) return false;
+        if ($lock->date > $time_now) return true;
+        if ($lock->updated_at != null && $lock->updated_at > $lock->date)
+            return true;
+        if ($lock->created_at != null && $lock->created_at > $lock->date)
+            return true;
+        return false;
     }
 
     /**

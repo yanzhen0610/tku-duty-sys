@@ -42,18 +42,13 @@ class ShiftsArrangementsController extends Controller
     private static function is_locked(Carbon $date, $shift)
     {
         $time_now = now();
-        $lock = ShiftArrangementLock::firstOrNew(
-            [
-                'date' => $date->format('Y-m-d'),
-                'shift_id' => $shift->id,
-            ],
-            [
-                'is_locked' => $date < $time_now,
-            ]
-        );
-        if ($lock->updated_at == null) return $lock->is_locked;
-        return $lock->date > $time_now || $lock->updated_at > $date
-            ? $lock->is_locked : false;
+        $lock = ShiftArrangementLock::where([
+            'date' => $date->format('Y-m-d'),
+            'shift_id' => $shift->id,
+        ])->first();
+        if (ShiftArrangementLocksController::isValidLock($lock, $time_now))
+            return $lock->is_locked;
+        return $date < $time_now;
     }
 
     static function getShiftsArrangements($from_date, $to_date, $area, $shift)
