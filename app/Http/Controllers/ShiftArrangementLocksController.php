@@ -7,8 +7,8 @@ use App\Shift;
 use App\ShiftArrangementLock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
 // use Illuminate\Support\Carbon\CarbonPeriod;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use \Carbon\CarbonPeriod;
 use \Carbon\CarbonInterval;
@@ -67,10 +67,9 @@ class ShiftArrangementLocksController extends Controller
 
         // defaults
         foreach ($shifts as $key => $shift) foreach ($period as $date)
-            $locks[$shift->uuid][$date->format('Y-m-d')] = $date < $time_now;
+            $locks[$shift->uuid][$date->format('Y-m-d')] = $date <= $time_now;
 
-        $query->get()->each(function ($item, $key) use (&$locks, $time_now)
-        {
+        $query->get()->each(function ($item, $key) use (&$locks, $time_now) {
             if (static::isValidLock($item, $time_now))
                 $locks[$item->shift->uuid][$item->date->format('Y-m-d')] = $item->is_locked;
         });
@@ -246,8 +245,7 @@ class ShiftArrangementLocksController extends Controller
         }
         else if ($area_uuid)
         {
-            $shifts = Shift::with('area')->where('area_id', function ($query) use ($area_uuid)
-            {
+            $shifts = Shift::with('area')->where('area_id', function ($query) use ($area_uuid) {
                 $query->select('id')->from((new Area())->getTable())->where('uuid', $area_uuid);
             })->get();
         }
@@ -281,7 +279,7 @@ class ShiftArrangementLocksController extends Controller
                             'shift_id' => $shift->id,
                         ],
                         [
-                            'is_locked' => $date < $time_now,
+                            'is_locked' => $date <= $time_now,
                         ]
                     )->is_locked;
             }
