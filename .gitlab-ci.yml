@@ -1,0 +1,213 @@
+variables:
+  # Pull Git submodules
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - build
+  - test
+  - deploy
+
+build_docker_image:
+  stage: build
+  image: docker:stable
+  services:
+    - name: docker:stable-dind
+      alias: docker
+  variables:
+    # When using dind service we need to instruct docker, to talk with the
+    # daemon started inside of the service. The daemon is available with
+    # a network connection instead of the default /var/run/docker.sock socket.
+    #
+    # The 'docker' hostname is the alias of the service container as described at
+    # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
+    #
+    # Note that if you're using the Kubernetes executor, the variable should be set to
+    # tcp://localhost:2375/ because of how the Kubernetes executor connects services
+    # to the job container
+    # DOCKER_HOST: tcp://localhost:2375/
+    #
+    # For non-Kubernetes executors, we use tcp://docker:2375/
+    DOCKER_HOST: tcp://docker:2375/
+    # When using dind, it's wise to use the overlayfs driver for
+    # improved performance.
+    DOCKER_DRIVER: overlay2
+    #
+    # This will instruct Docker not to start over TLS.
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - docker info
+  script:
+    - export DOCKER_IMAGE_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}"
+    - export DOCKER_IMAGE_SHORT_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHORT_SHA}"
+    - export DOCKER_IMAGE_BRANCH_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:$(echo ${CI_COMMIT_REF_NAME} | tr '[:upper:]' '[:lower:]' | sed 's/[^-.0-9A-Z_a-z]/-/g')"
+    - export DOCKERFILE='./docker/Dockerfile'
+    - export DOCKER_BUILD_PATH='.'
+    - echo ${DOCKER_IMAGE_TAG_NAME}
+    - echo ${DOCKER_IMAGE_SHORT_TAG_NAME}
+    - echo ${DOCKER_IMAGE_BRANCH_TAG_NAME}
+    - >
+      if docker pull "${DOCKER_IMAGE_TAG_NAME}";
+      then
+        docker tag "${DOCKER_IMAGE_TAG_NAME}" "${DOCKER_IMAGE_BRANCH_TAG_NAME}";
+      else
+        docker pull "${DOCKER_IMAGE_BRANCH_TAG_NAME}" || true;
+        docker build --cache-from "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --tag "${DOCKER_IMAGE_TAG_NAME}" --tag "${DOCKER_IMAGE_SHORT_TAG_NAME}" --tag "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --file "${DOCKERFILE}" "${DOCKER_BUILD_PATH}";
+        docker push ${DOCKER_IMAGE_TAG_NAME};
+        docker push ${DOCKER_IMAGE_SHORT_TAG_NAME};
+      fi
+    - docker push ${DOCKER_IMAGE_BRANCH_TAG_NAME}
+
+build_docker_dev_image:
+  stage: build
+  image: docker:stable
+  services:
+    - name: docker:stable-dind
+      alias: docker
+  variables:
+    # When using dind service we need to instruct docker, to talk with the
+    # daemon started inside of the service. The daemon is available with
+    # a network connection instead of the default /var/run/docker.sock socket.
+    #
+    # The 'docker' hostname is the alias of the service container as described at
+    # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
+    #
+    # Note that if you're using the Kubernetes executor, the variable should be set to
+    # tcp://localhost:2375/ because of how the Kubernetes executor connects services
+    # to the job container
+    # DOCKER_HOST: tcp://localhost:2375/
+    #
+    # For non-Kubernetes executors, we use tcp://docker:2375/
+    DOCKER_HOST: tcp://docker:2375/
+    # When using dind, it's wise to use the overlayfs driver for
+    # improved performance.
+    DOCKER_DRIVER: overlay2
+    #
+    # This will instruct Docker not to start over TLS.
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - docker info
+  script:
+    - export DOCKER_IMAGE_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}-dev"
+    - export DOCKER_IMAGE_SHORT_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHORT_SHA}-dev"
+    - export DOCKER_IMAGE_BRANCH_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:$(echo ${CI_COMMIT_REF_NAME} | tr '[:upper:]' '[:lower:]' | sed 's/[^-.0-9A-Z_a-z]/-/g')-dev"
+    - export DOCKERFILE='./docker/dev.dockerfile'
+    - export DOCKER_BUILD_PATH='./docker/'
+    - echo ${DOCKER_IMAGE_TAG_NAME}
+    - echo ${DOCKER_IMAGE_SHORT_TAG_NAME}
+    - echo ${DOCKER_IMAGE_BRANCH_TAG_NAME}
+    - >
+      if docker pull "${DOCKER_IMAGE_TAG_NAME}";
+      then
+        docker tag "${DOCKER_IMAGE_TAG_NAME}" "${DOCKER_IMAGE_BRANCH_TAG_NAME}";
+      else
+        docker pull "${DOCKER_IMAGE_BRANCH_TAG_NAME}" || true;
+        docker build --cache-from "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --tag "${DOCKER_IMAGE_TAG_NAME}" --tag "${DOCKER_IMAGE_SHORT_TAG_NAME}" --tag "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --file "${DOCKERFILE}" "${DOCKER_BUILD_PATH}";
+        docker push ${DOCKER_IMAGE_TAG_NAME};
+        docker push ${DOCKER_IMAGE_SHORT_TAG_NAME};
+      fi
+    - docker push ${DOCKER_IMAGE_BRANCH_TAG_NAME}
+
+test:
+  stage: test
+  needs: 
+    - build_docker_dev_image
+  # Official framework image. Look for the different tagged releases at:
+  # https://hub.docker.com/r/library/php
+  image: ${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}-dev
+  # This folder is cached between builds
+  # http://docs.gitlab.com/ce/ci/yaml/README.html#cache
+  cache:
+    key: ${CI_PROJECT_NAME}
+    paths:
+      - vendor/
+      - node_modules/
+  # Pick zero or more services to be used on all builds.
+  # Only needed when using a docker container to run your tests in.
+  # Check out: http://docs.gitlab.com/ce/ci/docker/using_docker_images.html#what-is-a-service
+  services:
+    - name: mysql:5.7
+      alias: mysql
+    - name: redis:latest
+      alias: redis
+  variables:
+    MYSQL_DATABASE: project_name
+    MYSQL_ROOT_PASSWORD: secret
+    # Environment variables for testing
+    DB_HOST: mysql
+    DB_DATABASE: ${MYSQL_DATABASE}
+    DB_USERNAME: root
+    DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    CACHE_DRIVER: redis
+    SESSION_DRIVER: redis
+    APP_ENV: testing
+    APP_DEBUG: "true"
+  before_script:
+    # Install project dependencies.
+    - composer install
+    # Install Node dependencies.
+    # comment this out if you don't have a node dependency
+    - npm install
+    # Generate Application key
+    - export APP_KEY="$(php artisan key:generate --show)"
+    # Run npm build
+    # comment this out if you don't have a frontend build
+    # you can change this to to your frontend building script like
+    # npm run build
+    - npm run dev
+    # Generate an application key. Re-cache.
+    # php artisan key:generate
+    - php artisan config:cache
+    # Run database migrations.
+    - php artisan migrate --force
+    # Run database seed
+    - php artisan db:seed
+  script:
+    # run laravel tests
+    - php vendor/bin/phpunit --coverage-text --colors=never
+    # run frontend tests
+    # if you have any task for testing frontend
+    # set it in your package.json script
+    # comment this out if you don't have a frontend test
+    # npm test
+
+deploy_full_time:
+  stage: deploy
+  needs: 
+    - build_docker_image
+  image: buildpack-deps:stable
+  environment:
+    name: TKU AGOX Full Time
+  only:
+    - dev
+    - master
+  script:
+    - mkdir ~/.ssh
+    - echo "${TKU_AGOX_SSH_KEY}" >~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo "${TKU_AGOX_SSH_KEY_PUB}" >~/.ssh/id_rsa.pub
+    - echo "${TKU_AGOX_SSH_KNOWN_HOST}" >>~/.ssh/known_hosts
+    - export DOCKER_IMAGE="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}"
+    - echo "${DOCKER_IMAGE}"
+    - eval ssh "${TKU_AGOX_SSH_USER}@${TKU_AGOX_HOST}" "${TKU_AGOX_FULL_TIME_DEPLOY_SCRIPT}"
+
+deploy_part_time:
+  stage: deploy
+  needs: 
+    - build_docker_image
+  image: buildpack-deps:stable
+  environment:
+    name: TKU AGOX Part Time
+  only:
+    - dev
+    - master
+  script:
+    - mkdir ~/.ssh
+    - echo "${TKU_AGOX_SSH_KEY}" >~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo "${TKU_AGOX_SSH_KEY_PUB}" >~/.ssh/id_rsa.pub
+    - echo "${TKU_AGOX_SSH_KNOWN_HOST}" >>~/.ssh/known_hosts
+    - export DOCKER_IMAGE="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}"
+    - echo "${DOCKER_IMAGE}"
+    - eval ssh "${TKU_AGOX_SSH_USER}@${TKU_AGOX_HOST}" "${TKU_AGOX_PART_TIME_DEPLOY_SCRIPT}"

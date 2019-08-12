@@ -13,7 +13,7 @@ RUN set -eux; \
     npm install; \
     npm run production; \
 	git rev-parse HEAD >public/version || true; \
-    rm -fr node_modules .git tests
+    rm -fr node_modules tests .[!.]* resources/js resources/sass
 
 
 ################################################################################
@@ -24,16 +24,12 @@ RUN set -eux; \
 ################################################################################
 FROM composer
 
-RUN set -eux; \
-	apk add --no-cache libpng-dev; \
-	docker-php-ext-install gd; 
-
 COPY --from=0 /app /app
 
 RUN set -eux; \
 	cd /app; \
 	rm -fr docker; \
-    composer install --optimize-autoloader --no-dev
+    composer install --ignore-platform-reqs --optimize-autoloader --no-dev
 
 
 ################################################################################
@@ -48,12 +44,12 @@ FROM alpine:3.10
 #
 # Nginx 1.17.2
 # modified from:
-# https://github.com/nginxinc/docker-nginx/blob/c817e28dd68b6daa33265a8cb527b1c4cd723b59/mainline/alpine/Dockerfile
+# https://github.com/nginxinc/docker-nginx/blob/e3bbc1131a683dabf868268e62b9d3fbd250191b/mainline/alpine/Dockerfile
 #
 ################################################################################
 
-ENV NGINX_VERSION 1.17.2
-ENV NJS_VERSION   0.3.3
+ENV NGINX_VERSION 1.17.3
+ENV NJS_VERSION   0.3.5
 ENV PKG_RELEASE   1
 
 RUN set -x \
@@ -417,6 +413,18 @@ RUN chown -R www-data:www-data .; \
     echo 'APP_KEY=' >.env; \
 	php artisan key:generate;
 
+VOLUME [ \
+	"/app/storage", \
+	"/app/storage/app", \
+	"/app/storage/app/public", \
+	"/app/storage/framework", \
+	"/app/storage/framework/cache", \
+	"/app/storage/framework/cache/data", \
+	"/app/storage/framework/sessions", \
+	"/app/storage/framework/testing", \
+	"/app/storage/framework/views", \
+	"/app/storage/logs" \
+]
 ENTRYPOINT [ "docker-entrypoint.sh" ]
 STOPSIGNAL SIGQUIT
 
