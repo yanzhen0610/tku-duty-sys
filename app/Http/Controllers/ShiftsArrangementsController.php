@@ -48,14 +48,14 @@ class ShiftsArrangementsController extends Controller
         ])->first();
         if (ShiftArrangementLocksController::isValidLock($lock, $time_now))
             return $lock->is_locked;
-        return $date < $time_now;
+        return $date <= $time_now;
     }
 
     static function getShiftsArrangements($from_date, $to_date, $area, $shift)
     {
         $query = ShiftArrangement::with([
-            'shift' => function ($query) { $query->withTrashed(); },
-            'onDutyStaff' => function ($query) { $query->withTrashed(); },
+            'shift_eager' => function ($query) { $query->withTrashed(); },
+            'on_duty_staff_eager' => function ($query) { $query->withTrashed(); },
         ])->whereBetween('date', [$from_date, $to_date]);
         
         if ($area)
@@ -80,15 +80,17 @@ class ShiftsArrangementsController extends Controller
         {
             $query = $query->whereIn('shift_id', function ($query) {
                 $query->select('id')->from((new Shift())->getTable())
-                    ->whereNull('deleted_at')
-                    ->whereIn('area_id', function ($query) {
-                        $query->select('id')->from((new Area())->getTable())
-                            ->whereNull('deleted_at');
-                    });
+                    ->whereNull('deleted_at');
             });
         }
 
-        return $query->get();
+        $arrangements = $query->get();
+
+        $arrangements->each(function (&$item) {
+            $item->setAppends(['shift', 'on_duty_staff']);
+        });
+
+        return $arrangements;
     }
 
     /**
@@ -149,8 +151,8 @@ class ShiftsArrangementsController extends Controller
         {
             $time_now = now();
             $from_date = new Carbon($request->input('from_date', $time_now));
-            $to_date = new Carbon($request->input('to_date', (new Carbon($time_now))
-                ->addDays(ShiftsArrangementsController::$DEFAULT_DURATION_DAYS)));
+            $to_date = (new Carbon($request->input('to_date', $time_now)))
+                ->addDays(ShiftsArrangementsController::$DEFAULT_DURATION_DAYS);
         } catch (Exception $e)
         {
             abort(400);
@@ -205,13 +207,13 @@ class ShiftsArrangementsController extends Controller
         $period = new CarbonPeriod($from_date, $to_date, CarbonInterval::days());
 
         foreach ($shifts as $key => $shift) foreach ($period as $date)
-            $kv_arrangements[$shift->id][$date->timestamp] = array();
+            $kv_arrangements[$shift->id][$date->timestamp + $date->getOffset()] = array();
 
         foreach ($arrangements as $key => $arrangement)
-            array_push($kv_arrangements[$arrangement->shift_id][$arrangement->date->timestamp], $arrangement);
+            array_push($kv_arrangements[$arrangement->shift_id][$arrangement->date->timestamp + $arrangement->date->getOffset()], $arrangement);
 
-        $from_week = intdiv(intdiv($from_date->timestamp, 86400) + 4, 7);
-        $to_week = intdiv(intdiv($to_date->timestamp, 86400) + 4, 7);
+        $from_week = intdiv(intdiv($from_date->timestamp + $from_date->getOffset(), 86400) + 4, 7);
+        $to_week = intdiv(intdiv($to_date->timestamp + $to_date->getOffset(), 86400) + 4, 7);
 
         $spreadsheet = new Spreadsheet();
 
@@ -302,15 +304,15 @@ class ShiftsArrangementsController extends Controller
         return $spreadsheet;
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        abort(404);
-    }
+    // /**
+    //  * Show the form for creating a new resource.
+    //  *
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function create()
+    // {
+    //     abort(404);
+    // }
 
     /**
      * Store a newly created resource in storage.
@@ -331,12 +333,12 @@ class ShiftsArrangementsController extends Controller
 
         $on_duty_staff = $request->input('on_duty_staff');
         $date = Carbon::parse($request->input('date'));
-        $shift = Shift::with('area')->where('uuid', $request->input('shift'))->first();
+        $shift = Shift::with('area_eager')->where('uuid', $request->input('shift'))->first();
 
-        $on_duty_staff_id = User::where('username', $on_duty_staff)->first()->id;
+        $on_duty_staff = User::where('username', $on_duty_staff)->first();
         
         $is_manager = static::is_manager($shift);
-        $is_owner = $on_duty_staff_id == Auth::user()->id;
+        $is_owner = $on_duty_staff->id == Auth::user()->id;
         $is_locked = static::is_locked($date, $shift);
 
         if (!$is_manager && (!$is_owner || $is_locked))
@@ -344,9 +346,10 @@ class ShiftsArrangementsController extends Controller
 
         $arrangement = ShiftArrangement::firstOrCreate([
             'shift_id' => $shift->id,
-            'on_duty_staff_id' => $on_duty_staff_id,
+            'on_duty_staff_id' => $on_duty_staff->id,
             'date' => $date,
-        ])->load('shift', 'onDutyStaff');
+        ])->load('shift_eager', 'on_duty_staff_eager');
+        $arrangement->setAppends(['shift', 'on_duty_staff']);
 
         event(new ShiftArrangementChangeEvent(
             $date,
@@ -368,31 +371,34 @@ class ShiftsArrangementsController extends Controller
      */
     public function show(ShiftArrangement $shiftsArrangement)
     {
-        return $shiftsArrangement;
+        $arrangement = $shiftsArrangement;
+        $arrangement->load(['shift_eager', 'on_duty_staff_eager']);
+        $arrangement->setAppends(['shift', 'on_duty_staff']);
+        return $arrangement;
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\ShiftArrangement  $shiftArrangement
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(ShiftArrangement $shiftArrangement)
-    {
-        abort(404);
-    }
+    // /**
+    //  * Show the form for editing the specified resource.
+    //  *
+    //  * @param  \App\ShiftArrangement  $shiftArrangement
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function edit(ShiftArrangement $shiftArrangement)
+    // {
+    //     abort(404);
+    // }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\ShiftArrangement  $shiftArrangement
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, ShiftArrangement $shiftArrangement)
-    {
-        abort(501);
-    }
+    // /**
+    //  * Update the specified resource in storage.
+    //  *
+    //  * @param  \Illuminate\Http\Request  $request
+    //  * @param  \App\ShiftArrangement  $shiftArrangement
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function update(Request $request, ShiftArrangement $shiftArrangement)
+    // {
+    //     abort(404);
+    // }
 
     /**
      * Remove the specified resource from storage.
@@ -412,7 +418,7 @@ class ShiftsArrangementsController extends Controller
             return response(null, 403);
 
             
-        if ($shiftsArrangement->delete())
+        if ($arrangement->delete())
         {
             event(new ShiftArrangementChangeEvent(
                 $arrangement->date,

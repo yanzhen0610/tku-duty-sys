@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\{Area, User};
+use App\EditTable\EditTable;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,7 +34,15 @@ class AreasController extends Controller
         $base = [
             'responsible_person' => [
                 'type' => 'dropdown',
-                'default' => UsersController::listUsers(),
+                'default' => User::orWhereIn('id', function ($query) {
+                    $query->select('responsible_person_id')->from((new Area())->getTable())
+                        ->whereNull('deleted_at');
+                })->get()->map(function (User $user) {
+                    return [
+                        'key' => $user->username,
+                        'display_name' => $user->display_name,
+                    ];
+                }),
             ],
         ];
         if (Auth::user()->is_admin)
@@ -41,42 +50,31 @@ class AreasController extends Controller
         return $base;
     }
 
-    static function areaFilterOutFields(Area $area)
-    {
-        $fields = array();
-        foreach ($area->toArray() as $key => $value) {
-            if ($key == 'responsible_person')
-                $fields[$key] = [
-                    'selected' => $value['username'],
-                ];
-            else
-                $fields[$key] = $value;
-        }
-        if (Auth::user()->is_admin)
-        {
-            $fields['update_url'] = route('areas.update', $area->uuid);
-            $fields['destroy_url'] = route('areas.destroy', $area->uuid);
-        }
-        $fields['key'] = $area->area_name;
-        return $fields;
-    }
-
     static function getAreasData()
     {
-        $areas_data = [
-            'fields' => AreasController::areasFields(),
-            'rows' => Area::with([
-                'responsiblePerson' => function ($query) { $query->withTrashed(); },
-            ])->get()->map([AreasController::class, 'areaFilterOutFields']),
-            'primary_key' => 'area_name',
-        ];
-        if (Auth::user()->is_admin)
-        {
-            $areas_data['editable'] = true;
-            $areas_data['create_url'] = route('areas.store');
-            $areas_data['destroyable'] = true;
-        }
-        return $areas_data;
+        return new EditTable(
+            Area::with(['responsible_person_eager' => function ($query) {
+                $query->withTrashed();
+            }])->get(),
+            static::areasFields(),
+            Auth::user()->is_admin,
+            Auth::user()->is_admin,
+            'area_name',
+            Auth::user()->is_admin ? 'areas.store' : null,
+            Auth::user()->is_admin ? 'areas.update' : null,
+            Auth::user()->is_admin ? 'areas.destroy' : null
+        );
+    }
+
+    static function singleArea(Area $area)
+    {
+        return EditTable::singleRow(
+            $area,
+            static::areasFields(),
+            'area_name',
+            Auth::user()->is_admin ? 'areas.update' : null,
+            Auth::user()->is_admin ? 'areas.destroy' : null
+        );
     }
 
     /**
@@ -86,20 +84,18 @@ class AreasController extends Controller
      */
     public function index()
     {
-        //
         return static::getAreasData();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-        abort(404);
-    }
+    // /**
+    //  * Show the form for creating a new resource.
+    //  *
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function create()
+    // {
+    //     abort(404);
+    // }
 
     /**
      * Store a newly created resource in storage.
@@ -109,7 +105,6 @@ class AreasController extends Controller
      */
     public function store(Request $request)
     {
-        //
         $validator = Validator::make($request->all(), [
             'area_name' => ['required', 'min:1', 'max:255'],
             'responsible_person.selected' => ['required', 'exists:users,username'],
@@ -132,9 +127,9 @@ class AreasController extends Controller
         )->first()->id;
 
         $area = Area::create($fields);
-        $area->load('responsiblePerson');
+        $area->load('responsible_person_eager');
 
-        return static::areaFilterOutFields($area);
+        return static::singleArea($area);
     }
 
     /**
@@ -145,21 +140,19 @@ class AreasController extends Controller
      */
     public function show(Area $area)
     {
-        //
-        return static::areaFilterOutFields($area);
+        return static::singleArea($area);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Area  $area
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Area $area)
-    {
-        //
-        abort(404);
-    }
+    // /**
+    //  * Show the form for editing the specified resource.
+    //  *
+    //  * @param  \App\Area  $area
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function edit(Area $area)
+    // {
+    //     abort(404);
+    // }
 
     /**
      * Update the specified resource in storage.
@@ -170,10 +163,9 @@ class AreasController extends Controller
      */
     public function update(Request $request, Area $area)
     {
-        //
         $validator = Validator::make($request->all(), [
-            'area_name' => ['required', 'min:1', 'max:255'],
-            'responsible_person.selected' => ['required', 'exists:users,username'],
+            'area_name' => ['min:1', 'max:255'],
+            'responsible_person.selected' => ['exists:users,username'],
         ])->setAttributeNames([
             'responsible_person.selected' =>
                 Lang::get('validation.attributes.responsible_person'),
@@ -185,14 +177,16 @@ class AreasController extends Controller
                 'responsible_person'
             ), 400);
 
-        $fields = $request->only(['area_name', 'responsible_person']);
-        $fields['responsible_person'] = $fields['responsible_person']['selected'];
+        $fields = $request->only(['area_name', 'responsible_person.selected']);
+        if (array_key_exists('responsible_person', $fields))
+            $fields['responsible_person'] =
+                $fields['responsible_person']['selected'];
 
         foreach ($fields as $key => $value)
             $area->$key = $value;
         $area->save();
 
-        return static::areaFilterOutFields($area);
+        return static::singleArea($area);
     }
 
     /**
@@ -203,14 +197,6 @@ class AreasController extends Controller
      */
     public function destroy(Area $area)
     {
-        //
-        try
-        {
-            $area->delete();
-        }
-        catch (QueryException $e)
-        {
-            return response(null, 400);
-        }
+        $area->delete();
     }
 }

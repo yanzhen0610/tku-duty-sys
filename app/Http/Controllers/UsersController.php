@@ -18,17 +18,6 @@ class UsersController extends Controller
         $this->middleware('admin', ['except' => ['index', 'show']]);
     }
 
-    static function listUsers()
-    {
-        return User::all()->map(function(User $user)
-        {
-            return [
-                'key' => $user->username,
-                'display_name' => $user->display_name,
-            ];
-        });
-    }
-
     private static $usersFields = [
         'display_name' => ['type' => 'text'],
         'mobile_ext' => ['type' => 'text'],
@@ -47,9 +36,9 @@ class UsersController extends Controller
 
     public static function userFilterOutFields(User $user)
     {
-        $fields = array();
+        $fields = $user->toArray();
         foreach (static::usersFields() as $key => $value)
-            if ($value != 'button-popup-window')
+            if ($value['type'] != 'button-popup-window')
                 $fields[$key] = $user->$key;
         if (Auth::user()->is_admin)
         {
@@ -68,7 +57,7 @@ class UsersController extends Controller
     {
         $users_data = [
             'fields' => static::usersFields(),
-            'rows' => User::with(['isAdminEager', 'isDisabledEager'])
+            'rows' => User::with(['is_admin_eager', 'is_disabled_eager'])
                 ->get()->map([static::class, 'userFilterOutFields'])
                 ->sortBy('is_disabled')->values(),
             'editable' => Auth::user()->is_admin,
@@ -87,20 +76,18 @@ class UsersController extends Controller
      */
     public function index()
     {
-        //
         return static::getUsersData();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-        abort(404);
-    }
+    // /**
+    //  * Show the form for creating a new resource.
+    //  *
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function create()
+    // {
+    //     abort(404);
+    // }
 
     /**
      * Store a newly created resource in storage.
@@ -141,21 +128,19 @@ class UsersController extends Controller
      */
     public function show(User $user)
     {
-        //
         return $this->userFilterOutFields($user);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\User  $user
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(User $user)
-    {
-        //
-        abort(404);
-    }
+    // /**
+    //  * Show the form for editing the specified resource.
+    //  *
+    //  * @param  \App\User  $user
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function edit(User $user)
+    // {
+    //     abort(404);
+    // }
 
     /**
      * Update the specified resource in storage.
@@ -188,14 +173,7 @@ class UsersController extends Controller
      */
     public function destroy(User $user)
     {
-        try
-        {
-            $user->delete();
-        }
-        catch (QueryException $e)
-        {
-            return response(null, 400);
-        }
+        $user->delete();
     }
 
     public function resetPassword(User $user) {

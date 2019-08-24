@@ -165,22 +165,48 @@ test:
     - php artisan db:seed
   script:
     # run laravel tests
-    - php vendor/bin/phpunit --coverage-text --colors=never
+    - php vendor/bin/phpunit --coverage-text --colors=never --coverage-html report/coverage --log-junit report/report.xml
     # run frontend tests
     # if you have any task for testing frontend
     # set it in your package.json script
     # comment this out if you don't have a frontend test
     # npm test
+  artifacts:
+    name: ${CI_PROJECT_NAME}:${CI_COMMIT_SHA}
+    paths:
+      - report
+    reports:
+      junit: report/report.xml
+
+deploy_staging:
+  stage: deploy
+  needs:
+    - build_docker_image
+  environment:
+    name: TKU AGOX Staging
+  only:
+    - dev
+    - master
+  script:
+    - mkdir ~/.ssh
+    - echo "${TKU_AGOX_SSH_KEY}" >~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo "${TKU_AGOX_SSH_KEY_PUB}" >~/.ssh/id_rsa.pub
+    - echo "${TKU_AGOX_SSH_KNOWN_HOST}" >>~/.ssh/known_hosts
+    - export DOCKER_IMAGE="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}"
+    - echo "${DOCKER_IMAGE}"
+    - eval ssh "${TKU_AGOX_SSH_USER}@${TKU_AGOX_HOST}" "${TKU_AGOX_STAGING_DEPLOY_SCRIPT}"
 
 deploy_full_time:
   stage: deploy
   needs: 
     - build_docker_image
+    - test
   image: buildpack-deps:stable
   environment:
     name: TKU AGOX Full Time
+  when: manual
   only:
-    - dev
     - master
   script:
     - mkdir ~/.ssh
@@ -196,11 +222,12 @@ deploy_part_time:
   stage: deploy
   needs: 
     - build_docker_image
+    - test
   image: buildpack-deps:stable
   environment:
     name: TKU AGOX Part Time
+  when: manual
   only:
-    - dev
     - master
   script:
     - mkdir ~/.ssh

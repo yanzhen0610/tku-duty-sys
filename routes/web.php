@@ -68,7 +68,7 @@ Route::resource('areas', 'AreasController')
     ->only(['index', 'show', 'store', 'update', 'destroy']);
 
 Route::resource('shifts_arrangements', 'ShiftsArrangementsController')
-    ->only(['index', 'show', 'store', 'update', 'destroy']);
+    ->only(['index', 'show', 'store', 'destroy']);
 
 Route::get(
     'download_shifts_arrangements_xlsx',

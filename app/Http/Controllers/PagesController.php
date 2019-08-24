@@ -25,14 +25,14 @@ class PagesController extends Controller
 
     public function areas()
     {
-        $table_data = AreasController::getAreasData();
+        $table_data = AreasController::getAreasData()->toArray();
         $title = Auth::user()->is_admin ? Lang::get('ui.areas_management') : Lang::get('ui.areas');
         return view('pages.edit_table', compact(['title', 'table_data']));
     }
 
     public function shifts()
     {
-        $table_data = ShiftsController::getShiftsData();
+        $table_data = ShiftsController::getShiftsData()->toArray();
         $title = Auth::user()->is_admin ? Lang::get('ui.shifts_management') : Lang::get('ui.shifts');
         return view('pages.edit_table', compact(['title', 'table_data']));
     }
@@ -42,10 +42,26 @@ class PagesController extends Controller
         $from_date = now()->startOfWeek(Carbon::SUNDAY)->toDateString();
         $to_date = now()->addDays(30)->endOfWeek(Carbon::SATURDAY)->toDateString();
 
-        $areas = Area::with('shifts')->get();
+        $areas = Area::with('shifts_eager')->get();
         $is_admin = Auth::check() && (Auth::user()->is_admin || $areas->contains(function ($value, $key) {
             return $value->responsible_person_id == Auth::user()->id;
         }));
+        $arrangements = ShiftArrangement::with(
+            ['shift_eager', 'on_duty_staff_eager' => function ($query) {
+                $query->withTrashed(); // show deleted staves
+            }])
+            ->whereIn('shift_id', function ($query) {
+                $query->select('id')->from((new Shift())->getTable())
+                    ->whereNull('deleted_at')
+                    ->whereIn('area_id', function ($query) {
+                        $query->select('id')->from((new Area())->getTable())
+                            ->whereNull('deleted_at');
+                    });
+            })
+            ->whereBetween('date', [$from_date, $to_date])->get();
+        $arrangements->each(function (&$item) {
+            $item->setAppends(['shift', 'on_duty_staff']);
+        });
 
         $data = [
             'is_admin' => $is_admin,
@@ -56,24 +72,12 @@ class PagesController extends Controller
                 'from_date' => $from_date,
                 'to_date' => $to_date,
             ],
-            'shifts' => Shift::with('area')->whereIn('area_id', function ($query) {
+            'shifts' => Shift::with('area_eager')->whereIn('area_id', function ($query) {
                 $query->select('id')->from((new Area())->getTable())
                     ->whereNull('deleted_at');
             })->get(),
             'staves' => User::all(),
-            'shifts_arrangements' => ShiftArrangement::with(
-                ['shift', 'onDutyStaff' => function ($query) {
-                    $query->withTrashed(); // show deleted staves
-                }])
-                ->whereIn('shift_id', function ($query) {
-                    $query->select('id')->from((new Shift())->getTable())
-                        ->whereNull('deleted_at')
-                        ->whereIn('area_id', function ($query) {
-                            $query->select('id')->from((new Area())->getTable())
-                                ->whereNull('deleted_at');
-                        });
-                })
-                ->whereBetween('date', [$from_date, $to_date])->get(),
+            'shifts_arrangements' => $arrangements,
             'locks' => ShiftArrangementLocksController::getIsLocked($from_date, $to_date),
             'crud' => [
                 'create' => [

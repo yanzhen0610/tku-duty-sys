@@ -29,6 +29,8 @@ class Area extends Model
     protected $hidden = [
         'id',
         'responsible_person_id',
+        'responsible_person_eager',
+        'shifts_eager',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -59,39 +61,31 @@ class Area extends Model
 
     public function getResponsiblePersonAttribute()
     {
-        return $this->responsiblePerson()->getResults();
+        return $this->responsible_person_eager;
     }
 
     public function setResponsiblePersonAttribute($value)
     {
-        if ($value instanceof User) {
+        if ($value instanceof User)
             $this->responsible_person_id = $value->id;
-            $this->save();
-        }
         else if (is_int($value))
-        {
             $this->responsible_person_id = $value;
-            $this->save();
-        }
         else if (is_string($value))
-        {
             $this->responsible_person_id = User::where('username', $value)->first()->id;
-            $this->save();
-        }
     }
 
-    public function responsiblePerson()
+    public function responsible_person_eager()
     {
         return $this->belongsTo('App\User', 'responsible_person_id', 'id');
     }
 
-    public function shifts()
+    public function shifts_eager()
     {
         return $this->hasMany('App\Shift', 'area_id', 'id');
     }
 
     public function getShiftsAttribute()
     {
-        return $this->shifts()->getResults();
+        return $this->shifts_eager;
     }
 }

@@ -37,7 +37,9 @@ class ShiftArrangement extends Model
     protected $hidden = [
         'id',
         'shift_id',
+        'shift_eager',
         'on_duty_staff_id',
+        'on_duty_staff_eager',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -76,61 +78,43 @@ class ShiftArrangement extends Model
         return 'uuid';
     }
 
-    public function shift()
+    public function shift_eager()
     {
         return $this->belongsTo('App\Shift', 'shift_id', 'id');
     }
 
-    public function onDutyStaff()
+    public function on_duty_staff_eager()
     {
         return $this->belongsTo('App\User', 'on_duty_staff_id', 'id');
     }
 
     public function getShiftAttribute()
     {
-        return $this->shift()->getResults();
+        return $this->shift_eager;
     }
 
     public function getOnDutyStaffAttribute()
     {
-        return $this->onDutyStaff()->getResults();
+        return $this->on_duty_staff_eager;
     }
 
     public function setShiftAttribute($value)
     {
         if ($value instanceof Shift)
-        {
             $this->shift_id = $value->id;
-            $this->save();
-        }
         else if (is_int($value))
-        {
             $this->shift_id = $value;
-            $this->save();
-        }
         else if (is_string($value))
-        {
             $this->shift_id = Shift::where('uuid', $value)->first()->id;
-            $this->save();
-        }
     }
 
     public function setOnDutyStaffAttribute($value)
     {
         if ($value instanceof User)
-        {
             $this->on_duty_staff_id = $value->id;
-            $this->save();
-        }
         else if (is_int($value))
-        {
             $this->on_duty_staff_id = $value;
-            $this->save();
-        }
         else if (is_string($value))
-        {
             $this->on_duty_staff_id = User::where('uuid', $value)->first()->id;
-            $this->save();
-        }
     }
 }

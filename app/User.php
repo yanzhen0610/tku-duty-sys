@@ -37,8 +37,8 @@ class User extends Authenticatable
         'remember_token',
         'email_verified_at',
         'status',
-        'isAdminEager',
-        'isDisabledEager',
+        'is_admin_eager',
+        'is_disabled_eager',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -57,30 +57,9 @@ class User extends Authenticatable
     public static $STATUS_NORMAL = 0;
     public static $STATUS_RESET_PASSWORD_REQUESTED = 1;
 
-    private static $GID_ADMIN = null;
-    private static $GID_DISABLED = null;
-
-    private function getAdminGID()
-    {
-        if (static::$GID_ADMIN == null)
-        {
-            static::$GID_ADMIN = Group::where('group_name', 'admin')->first(['id'])->id;
-        }
-        return static::$GID_ADMIN;
-    }
-
-    private static function getDisabledGID()
-    {
-        if (static::$GID_DISABLED == null)
-        {
-            static::$GID_DISABLED = Group::where('group_name', 'disabled')->first(['id'])->id;
-        }
-        return static::$GID_DISABLED;
-    }
-
     public function getIsAdminAttribute()
     {
-        return $this->username == 'admin' || count($this->isAdminEager) >= 1;
+        return $this->username == 'admin' || count($this->is_admin_eager) >= 1;
     }
 
     public function setIsAdminAttribute($value)
@@ -91,7 +70,7 @@ class User extends Authenticatable
 
     public function getIsDisabledAttribute()
     {
-        return $this->username != 'admin' && count($this->isDisabledEager) >= 1;
+        return $this->username != 'admin' && count($this->is_disabled_eager) >= 1;
     }
 
     public function setIsDisabledAttribute($value)
@@ -110,9 +89,12 @@ class User extends Authenticatable
         return 'username';
     }
 
-    public function isAdminEager()
+    public function is_admin_eager()
     {
-        return $this->groups()->WherePivot('group_id', '=', static::getAdminGID());
+        return $this->groups()->WherePivot('group_id', '=', function ($query) {
+            $query->select('id')->from('groups')
+                ->where('group_name', 'admin');
+        });
     }
 
     public function entitleAdmin()
@@ -120,22 +102,22 @@ class User extends Authenticatable
         if ($this->username == 'admin') return;
         try
         {
-            $this->groups()->save(Group::where('group_name', 'admin')->first());
+            $this->groups()->attach(Group::where('group_name', 'admin')->first());
         } catch (QueryException $e) {}
     }
 
     public function revokeAdmin()
     {
         if ($this->username == 'admin') return;
-        try
-        {
-            $this->groups()->detach(Group::where('group_name', 'admin')->first());
-        } catch (QueryException $e) {}
+        $this->groups()->detach(Group::where('group_name', 'admin')->first());
     }
 
-    public function isDisabledEager()
+    public function is_disabled_eager()
     {
-        return $this->groups()->WherePivot('group_id', '=', static::getDisabledGID());
+        return $this->groups()->WherePivot('group_id', '=', function ($query) {
+            $query->select('id')->from('groups')
+                ->where('group_name', 'disabled');
+        });
     }
 
     public function disable()
@@ -143,17 +125,14 @@ class User extends Authenticatable
         if ($this->username == 'admin') return;
         try
         {
-            $this->groups()->save(Group::where('group_name', 'disabled')->first());
+            $this->groups()->attach(Group::where('group_name', 'disabled')->first());
         } catch (QueryException $e) {}
     }
 
     public function enable()
     {
         if ($this->username == 'admin') return;
-        try
-        {
-            $this->groups()->detach(Group::where('group_name', 'disabled')->first());
-        } catch (QueryException $e) {}
+        $this->groups()->detach(Group::where('group_name', 'disabled')->first());
     }
 
 }

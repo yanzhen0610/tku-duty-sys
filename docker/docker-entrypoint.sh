@@ -16,6 +16,7 @@ quit()
 
 trap 'quit' QUIT
 
+php artisan optimize:clear
 php artisan optimize
 
 # Start nginx

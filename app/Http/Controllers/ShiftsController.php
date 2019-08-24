@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\{Area, Shift};
-use Illuminate\Database\QueryException;
+use App\EditTable\EditTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Lang;
@@ -39,41 +39,31 @@ class ShiftsController extends Controller
         return $base;
     }
 
-    static function shiftFilterOutFields(Shift $shift)
-    {
-        $fields = array();
-        foreach ($shift->toArray() as $key => $value)
-            if ($key == 'area')
-                $fields[$key] = [
-                    'selected' => $value['uuid'],
-                ];
-            else
-                $fields[$key] = $value;
-        if (Auth::user()->is_admin)
-        {
-            $fields['update_url'] = route('shifts.update', $shift->uuid);
-            $fields['destroy_url'] = route('shifts.destroy', $shift->uuid);
-        }
-        $fields['key'] = $shift->shift_name;
-        return $fields;
-    }
-
     static function getShiftsData()
     {
-        $shifts_data = [
-            'fields' => ShiftsController::shiftsFields(),
-            'rows' => Shift::with([
-                'area' => function ($query) { $query->withTrashed(); },
-            ])->get()->map([ShiftsController::class, 'shiftFilterOutFields']),
-            'primary_key' => 'shift_name',
-        ];
-        if (Auth::user()->is_admin)
-        {
-            $shifts_data['editable'] = true;
-            $shifts_data['create_url'] = route('shifts.store');
-            $shifts_data['destroyable'] = true;
-        }
-        return $shifts_data;
+        return new EditTable(
+            Shift::with([
+                'area_eager' => function ($query) { $query->withTrashed(); }
+            ])->get(),
+            static::shiftsFields(),
+            Auth::user()->is_admin,
+            Auth::user()->is_admin,
+            'shift_name',
+            Auth::user()->is_admin ? 'shifts.store' : null,
+            Auth::user()->is_admin ? 'shifts.update' : null,
+            Auth::user()->is_admin ? 'shifts.destroy' : null
+        );
+    }
+
+    static function singleShift(Shift $shift)
+    {
+        return EditTable::singleRow(
+            $shift,
+            static::shiftsFields(),
+            'shift_name',
+            Auth::user()->is_admin ? 'shifts.update' : null,
+            Auth::user()->is_admin ? 'shifts.destroy' : null
+        );
     }
 
     /**
@@ -83,20 +73,18 @@ class ShiftsController extends Controller
      */
     public function index()
     {
-        //
         return static::getShiftsData();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-        abort(404);
-    }
+    // /**
+    //  * Show the form for creating a new resource.
+    //  *
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function create()
+    // {
+    //     abort(404);
+    // }
 
     /**
      * Store a newly created resource in storage.
@@ -106,7 +94,6 @@ class ShiftsController extends Controller
      */
     public function store(Request $request)
     {
-        //
         $validator = Validator::make($request->all(), [
             'shift_name' => ['required', 'min:1', 'max:255'],
             'area.selected' => ['required', 'exists:areas,uuid'],
@@ -132,9 +119,9 @@ class ShiftsController extends Controller
         $fields['area_id'] = Area::where('uuid', $fields['area'])->first()->id;
 
         $shift = Shift::create($fields);
-        $shift->load('area');
+        $shift->load('area_eager');
 
-        return static::shiftFilterOutFields($shift);
+        return static::singleShift($shift);
     }
 
     /**
@@ -145,19 +132,19 @@ class ShiftsController extends Controller
      */
     public function show(Shift $shift)
     {
-        //
+        return static::singleShift($shift);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Shift  $shift
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Shift $shift)
-    {
-        //
-    }
+    // /**
+    //  * Show the form for editing the specified resource.
+    //  *
+    //  * @param  \App\Shift  $shift
+    //  * @return \Illuminate\Http\Response
+    //  */
+    // public function edit(Shift $shift)
+    // {
+    //     abort(404);
+    // }
 
     /**
      * Update the specified resource in storage.
@@ -169,8 +156,8 @@ class ShiftsController extends Controller
     public function update(Request $request, Shift $shift)
     {
         $validator = Validator::make($request->all(), [
-            'shift_name' => ['required', 'min:1', 'max:255'],
-            'area.selected' => ['required', 'exists:areas,uuid'],
+            'shift_name' => ['min:1', 'max:255'],
+            'area.selected' => ['exists:areas,uuid'],
         ])->setAttributeNames([
             'area.selected' => 
                 Lang::get('validation.attributes.area_name'),
@@ -189,13 +176,14 @@ class ShiftsController extends Controller
             'working_time',
             'working_hours',
         ]);
-        $fields['area'] = $fields['area']['selected'];
+        if (array_key_exists('area', $fields))
+            $fields['area'] = $fields['area']['selected'];
 
         foreach ($fields as $key => $value)
             $shift->$key = $value;
         $shift->save();
 
-        return static::shiftFilterOutFields($shift);
+        return static::singleShift($shift);
     }
 
     /**
@@ -206,13 +194,6 @@ class ShiftsController extends Controller
      */
     public function destroy(Shift $shift)
     {
-        try
-        {
-            $shift->delete();
-        }
-        catch (QueryException $e)
-        {
-            return response(null, 400);
-        }
+        $shift->delete();
     }
 }

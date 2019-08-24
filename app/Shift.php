@@ -29,6 +29,7 @@ class Shift extends Model
     protected $hidden = [
         'id',
         'area_id',
+        'area_eager',
         'created_at',
         'updated_at',
         'deleted_at',
@@ -59,29 +60,20 @@ class Shift extends Model
 
     public function getAreaAttribute()
     {
-        return $this->area()->getResults();
+        return $this->area_eager;
     }
 
     public function setAreaAttribute($value)
     {
         if ($value instanceof Area)
-        {
             $this->area_id = $value->id;
-            $this->save();
-        }
         else if (is_int($value))
-        {
             $this->area_id = $value;
-            $this->save();
-        }
         else if (is_string($value))
-        {
             $this->area_id = Area::where('uuid', $value)->first()->id;
-            $this->save();
-        }
     }
 
-    public function area()
+    public function area_eager()
     {
         return $this->belongsTo('App\Area', 'area_id', 'id');
     }
