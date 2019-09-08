@@ -12,7 +12,6 @@ RUN set -eux; \
 	cd /app; \
     npm install; \
     npm run production; \
-	git rev-parse HEAD >public/version || true; \
     rm -fr \
 		node_modules \
 		tests \
@@ -423,7 +422,12 @@ COPY --from=1 /app /app
 
 WORKDIR /app
 
-RUN chown -R www-data:www-data storage; \
+ARG commit
+ENV COMMIT ${commit}
+
+RUN set -eux ; \
+	chown -R www-data:www-data storage; \
+	echo "${COMMIT}" >public/commit; \
     echo 'APP_KEY=' >.env; \
 	php artisan key:generate;
 

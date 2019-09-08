@@ -11,7 +11,8 @@
         "fideloper/proxy": "^4.0",
         "laravel/framework": "5.8.*",
         "laravel/tinker": "^1.0",
-        "phpoffice/phpspreadsheet": "^1.8"
+        "phpoffice/phpspreadsheet": "^1.8",
+        "sentry/sentry-laravel": "^1.2"
     },
     "require-dev": {
         "beyondcode/laravel-dump-server": "^1.0",

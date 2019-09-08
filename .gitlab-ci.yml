@@ -6,6 +6,7 @@ stages:
   - build
   - test
   - deploy
+  - deploy_sentry
 
 build_docker_image:
   stage: build
@@ -51,7 +52,7 @@ build_docker_image:
         docker tag "${DOCKER_IMAGE_TAG_NAME}" "${DOCKER_IMAGE_BRANCH_TAG_NAME}";
       else
         docker pull "${DOCKER_IMAGE_BRANCH_TAG_NAME}" || true;
-        docker build --cache-from "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --tag "${DOCKER_IMAGE_TAG_NAME}" --tag "${DOCKER_IMAGE_SHORT_TAG_NAME}" --tag "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --file "${DOCKERFILE}" "${DOCKER_BUILD_PATH}";
+        docker build --build-arg commit="${CI_COMMIT_SHA}" --cache-from "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --tag "${DOCKER_IMAGE_TAG_NAME}" --tag "${DOCKER_IMAGE_SHORT_TAG_NAME}" --tag "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --file "${DOCKERFILE}" "${DOCKER_BUILD_PATH}";
         docker push ${DOCKER_IMAGE_TAG_NAME};
         docker push ${DOCKER_IMAGE_SHORT_TAG_NAME};
       fi
@@ -106,6 +107,18 @@ build_docker_dev_image:
         docker push ${DOCKER_IMAGE_SHORT_TAG_NAME};
       fi
     - docker push ${DOCKER_IMAGE_BRANCH_TAG_NAME}
+
+sentry_releases:
+  stage: build
+  image: getsentry/sentry-cli
+  script:
+    - export REPOSITORY=`echo -n "${CI_PROJECT_PATH}" | sed --expression 's/\// \/ /g'`
+    - export COMMIT_SHA="${CI_COMMIT_SHA}"
+    - export VERSION="${COMMIT_SHA}"
+    - echo "${REPOSITORY}"
+    - echo "${COMMIT_SHA}"
+    - sentry-cli releases new "${VERSION}"
+    - sentry-cli releases set-commits "${VERSION}" --commit "${REPOSITORY}@${COMMIT_SHA}"
 
 test:
   stage: test
@@ -238,3 +251,37 @@ deploy_part_time:
     - export DOCKER_IMAGE="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}"
     - echo "${DOCKER_IMAGE}"
     - eval ssh "${TKU_AGOX_SSH_USER}@${TKU_AGOX_HOST}" "${TKU_AGOX_PART_TIME_DEPLOY_SCRIPT}"
+
+deploy_staging_sentry:
+  stage: deploy_sentry
+  needs:
+    - deploy_staging
+  only:
+    - dev
+    - master
+  image: getsentry/sentry-cli
+  script:
+    - export VERSION="${CI_COMMIT_SHA}"
+    - sentry-cli releases deploys "${VERSION}" new --env 'staging'
+
+deploy_full_time_sentry:
+  stage: deploy_sentry
+  needs:
+    - deploy_full_time
+  only:
+    - master
+  image: getsentry/sentry-cli
+  script:
+    - export VERSION="${CI_COMMIT_SHA}"
+    - sentry-cli releases deploys "${VERSION}" new --env 'production_full_time'
+
+deploy_part_time_sentry:
+  stage: deploy_sentry
+  needs:
+    - deploy_part_time
+  only:
+    - master
+  image: getsentry/sentry-cli
+  script:
+    - export VERSION="${CI_COMMIT_SHA}"
+    - sentry-cli releases deploys "${VERSION}" new --env 'production_part_time'
