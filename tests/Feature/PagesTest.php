@@ -249,4 +249,113 @@ class PagesTest extends TestCase
 
         $this->endQueryLog(0);
     }
+
+    public function testUserHomepage()
+    {
+        $user = factory(User::class, 1)->create()->first();
+
+        $this->startQueryLog();
+
+        $response = $this->actingAs($user)
+            ->get('/');
+        $response->assertStatus(200);
+
+        $this->endQueryLog(1);
+    }
+
+    public function testUserShiftsArrangementsTable()
+    {
+        $user = factory(User::class, 1)->create()->first();
+
+        $this->startQueryLog();
+
+        $response = $this->actingAs($user)
+            ->get('/shifts_arrangements_table');
+        $response->assertStatus(200);
+
+        $this->endQueryLog(12);
+    }
+
+    public function testUserShiftsArrangementsChanges()
+    {
+        $user = factory(User::class, 1)->create()->first();
+
+        $this->startQueryLog();
+
+        $response = $this->actingAs($user)
+            ->get('/shifts_arrangements_changes');
+        $response->assertStatus(200);
+
+        $this->endQueryLog(3);
+    }
+
+    public function testUserAreasTable()
+    {
+        $user = factory(User::class, 1)->create()->first();
+
+        $this->startQueryLog();
+
+        $response = $this->actingAs($user)
+            ->get('/areas_table');
+        $response->assertStatus(200);
+
+        $this->endQueryLog(4);
+    }
+
+    public function testUserShiftsTable()
+    {
+        $user = factory(User::class, 1)->create()->first();
+
+        $this->startQueryLog();
+
+        $response = $this->actingAs($user)
+            ->get('/shifts_table');
+        $response->assertStatus(200);
+
+        $this->endQueryLog(4);
+    }
+
+    public function testUserUsersTable()
+    {
+        $user = factory(User::class, 1)->create()->first();
+
+        $this->startQueryLog();
+
+        $response = $this->actingAs($user)
+            ->get('/users_table');
+        $response->assertStatus(200);
+
+        $this->endQueryLog(5);
+    }
+
+    public function testUserLoginForm()
+    {
+        $user = factory(User::class, 1)->create()->first();
+
+        $response = $this->actingAs($user)
+            ->get('/login');
+        $response->assertStatus(302);
+    }
+
+    public function testUserPasswordReset()
+    {
+        $user = factory(User::class, 1)->create()->first();
+
+        $response = $this->actingAs($user)
+            ->get('/password/request_reset');
+        $response->assertStatus(302);
+    }
+
+    public function testUserUserSelf()
+    {
+        $user = factory(User::class, 1)->create()->first();
+
+        $this->startQueryLog();
+
+        $response = $this->actingAs($user)
+            ->get('/user/self');
+        $response->assertStatus(200);
+
+        $this->endQueryLog(1);
+    }
 }

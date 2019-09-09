@@ -9,8 +9,8 @@ class EditTable implements Responsable
 {
     public function __construct(iterable $rows, iterable $fields,
         bool $editable, bool $destroyable, string $primary_key,
-        string $store_route_name, string $update_route_name,
-        string $destroy_route_name)
+        ?string $store_route_name, ?string $update_route_name,
+        ?string $destroy_route_name)
     {
         $this->rows = $rows;
         $this->fields = $fields;
