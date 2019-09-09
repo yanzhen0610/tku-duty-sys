@@ -54,7 +54,7 @@ class PagesTest extends TestCase
         $this->startQueryLog();
 
         $response = $this->get('/shifts_arrangements_changes');
-        $response->assertStatus(302);
+        $response->assertStatus(200);
 
         $this->endQueryLog(3);
     }

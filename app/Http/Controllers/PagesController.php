@@ -13,7 +13,7 @@ class PagesController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth'], ['except' => 'shiftsArrangementsTable']);
+        $this->middleware(['auth'], ['except' => ['shiftsArrangementsTable', 'shiftsArrangementsChanges']]);
     }
 
     public function users()
