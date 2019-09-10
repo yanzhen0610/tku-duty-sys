@@ -34,15 +34,17 @@ class AreasController extends Controller
         $base = [
             'responsible_person' => [
                 'type' => 'dropdown',
-                'default' => User::orWhereIn('id', function ($query) {
-                    $query->select('responsible_person_id')->from((new Area())->getTable())
-                        ->whereNull('deleted_at');
-                })->get()->map(function (User $user) {
-                    return [
-                        'key' => $user->username,
-                        'display_name' => $user->display_name,
-                    ];
-                }),
+                'default' => User::withTrashed()
+                    ->whereNull('deleted_at')
+                    ->orWhereIn('id', function ($query) {
+                        $query->select('responsible_person_id')->from((new Area())->getTable())
+                            ->whereNull('deleted_at');
+                    })->get()->map(function (User $user) {
+                        return [
+                            'key' => $user->username,
+                            'display_name' => $user->display_name,
+                        ];
+                    }),
             ],
         ];
         if (Auth::user()->is_admin)
