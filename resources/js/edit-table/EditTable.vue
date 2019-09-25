@@ -1,14 +1,13 @@
 <template>
   <div>
-    <div class="outer">
-      <div class="inner">
+    <div class="scrollable-x">
+      <div class="content">
         <table class="table">
           <thead>
             <tr>
-              <th>{{ i18n[primary_key] }}</th>
-              <th v-for="(_, key) in fields"
-                v-bind:key="key"
-              >{{ i18n[key] }}</th>
+              <th v-for="(field, index) in fields"
+                v-bind:key="index"
+              >{{ i18n[field.name] }}</th>
               <th v-if="editable"
               >{{ i18n['save'] }}</th>
               <th v-if="destroyable"
@@ -17,10 +16,9 @@
           </thead>
           <tfoot>
             <tr>
-              <th>{{ i18n[primary_key] }}</th>
-              <th v-for="(_, key) in fields"
-                v-bind:key="key"
-              >{{ i18n[key] }}</th>
+              <th v-for="(field, index) in fields"
+                v-bind:key="index"
+              >{{ i18n[field.name] }}</th>
               <th v-if="editable"
               >{{ i18n['save'] }}</th>
               <th v-if="destroyable"
@@ -28,10 +26,10 @@
             </tr>
           </tfoot>
           <edit-table-row
-            v-for="(rowData, index) in rows"
-            v-bind:key="rowData.editTableRowIndex"
-            v-bind:rowKey="index"
-            v-bind:rowData="rowData"
+            v-for="(row_data, index) in rows"
+            v-bind:key="row_data.id"
+            v-bind:index="index"
+            v-model="rows[index]"
           ></edit-table-row>
         </table>
       </div>
@@ -39,7 +37,7 @@
 
     <a class="button is-success is-outlined is-rounded"
       v-if="create_url"
-      @click="createNewRow()"
+      @click="create_new_row()"
     >
       <span class="icon is-small">
         <i class="fas fa-plus"></i>
@@ -49,44 +47,45 @@
   </div>
 </template>
 
-<style>
+<style scoped>
 .table {
   white-space: nowrap;
 }
 
-.outer {
+.scrollable-x {
   max-width: 100%;
   position: relative;
   overflow-x: auto;
 }
 
-.outer .inner {
+.scrollable-x .content {
   float: none;
   display: inline-block;
 }
 </style>
 
 <script>
-  import EditTableRow from './EditTableRow.vue';
-  import { mapGetters, mapMutations } from 'vuex';
+import EditTableRow from './EditTableRow.vue';
+import { mapGetters, mapMutations } from 'vuex';
 
-  export default {
-    components: {
-      'edit-table-row': EditTableRow,
-    },
-    computed: mapGetters([
+export default {
+  components: {
+    'edit-table-row': EditTableRow,
+  },
+  computed: {
+    ...mapGetters([
       'i18n',
       'rows',
       'fields',
       'editable',
       'destroyable',
       'create_url',
-      'primary_key',
     ]),
-    methods: {
-      ...mapMutations([
-        'createNewRow',
-      ]),
-    },
-  };
+  },
+  methods: {
+    ...mapMutations([
+      'create_new_row',
+    ]),
+  },
+};
 </script>

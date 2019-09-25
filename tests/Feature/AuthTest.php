@@ -21,8 +21,8 @@ class AuthTest extends TestCase
             $response = $this->get('/users/' . $user->username);
             $response->assertStatus(200);
             $response_content = json_decode($response->content(), true);
-            $this->assertEquals($user->username, $response_content['key']);
-            $this->assertNull($response_content['reset_password']['url']);
+            $this->assertEquals($user->username, $response_content['username']);
+            $this->assertNull($response_content['reset_password']);
             Auth::logout();
             $response = $this->post('/password/request_reset', [
                 'username' => $user->username,
@@ -32,8 +32,8 @@ class AuthTest extends TestCase
             $response = $this->get('/users/' . $user->username);
             $response->assertStatus(200);
             $response_content = json_decode($response->content(), true);
-            $this->assertEquals($user->username, $response_content['key']);
-            $this->assertNotNull($response_content['reset_password']['url']);
+            $this->assertEquals($user->username, $response_content['username']);
+            $this->assertNotNull($response_content['reset_password']);
             $response = $this->post('/admin/change_user_password/' . $user->username, [
                 'new_password' => 'password',
             ]);
@@ -41,8 +41,8 @@ class AuthTest extends TestCase
             $response = $this->get('/users/' . $user->username);
             $response->assertStatus(200);
             $response_content = json_decode($response->content(), true);
-            $this->assertEquals($user->username, $response_content['key']);
-            $this->assertNull($response_content['reset_password']['url']);
+            $this->assertEquals($user->username, $response_content['username']);
+            $this->assertNull($response_content['reset_password']);
         }
     }
 

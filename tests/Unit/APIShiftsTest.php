@@ -64,7 +64,7 @@ class APIShiftsTest extends TestCase
             $this->assertArrayHasKey('shift_name', $response_content);
             $this->assertArrayHasKey('area', $response_content);
             $this->assertEquals($shift->shift_name, $response_content['shift_name']);
-            $this->assertEquals($shift->area->uuid, $response_content['area']['selected']);
+            $this->assertEquals($shift->area->uuid, $response_content['area']);
         }
     }
 
@@ -83,9 +83,7 @@ class APIShiftsTest extends TestCase
             $this->startQueryLog();
             $response = $this->post('/shifts', [
                 'shift_name' => $shift_name,
-                'area' => [
-                    'selected' => $area->uuid,
-                ]
+                'area' => $area->uuid,
             ]);
             $this->endQueryLog(5);
 
@@ -95,7 +93,7 @@ class APIShiftsTest extends TestCase
             $this->assertArrayHasKey('shift_name', $response_content);
             $this->assertArrayHasKey('area', $response_content);
             $this->assertEquals($shift_name, $response_content['shift_name']);
-            $this->assertEquals($area->uuid, $response_content['area']['selected']);
+            $this->assertEquals($area->uuid, $response_content['area']);
             $uuid = $response_content['uuid'];
 
             
@@ -110,7 +108,7 @@ class APIShiftsTest extends TestCase
             $this->assertArrayHasKey('area', $response_content);
             $this->assertEquals($uuid, $response_content['uuid']);
             $this->assertEquals($shift_name, $response_content['shift_name']);
-            $this->assertEquals($area->uuid, $response_content['area']['selected']);
+            $this->assertEquals($area->uuid, $response_content['area']);
         }
     }
 
@@ -134,7 +132,7 @@ class APIShiftsTest extends TestCase
             $this->assertArrayHasKey('shift_name', $response_content);
             $this->assertArrayHasKey('area', $response_content);
             $this->assertEquals($shift->shift_name, $response_content['shift_name']);
-            $this->assertEquals($shift->area->uuid, $response_content['area']['selected']);
+            $this->assertEquals($shift->area->uuid, $response_content['area']);
             $uuid = $response_content['uuid'];
 
 
@@ -144,9 +142,7 @@ class APIShiftsTest extends TestCase
             $this->startQueryLog();
             $response = $this->patch('/shifts/'.$uuid, [
                 'shift_name' => $new_shift_name,
-                'area' => [
-                    'selected' => $new_area->uuid,
-                ]
+                'area' => $new_area->uuid,
             ]);
             $this->endQueryLog(6);
 
@@ -156,7 +152,7 @@ class APIShiftsTest extends TestCase
             $this->assertArrayHasKey('shift_name', $response_content);
             $this->assertArrayHasKey('area', $response_content);
             $this->assertEquals($new_shift_name, $response_content['shift_name']);
-            $this->assertEquals($new_area->uuid, $response_content['area']['selected']);
+            $this->assertEquals($new_area->uuid, $response_content['area']);
             $uuid = $response_content['uuid'];
 
             
@@ -171,7 +167,7 @@ class APIShiftsTest extends TestCase
             $this->assertArrayHasKey('area', $response_content);
             $this->assertEquals($uuid, $response_content['uuid']);
             $this->assertEquals($new_shift_name, $response_content['shift_name']);
-            $this->assertEquals($new_area->uuid, $response_content['area']['selected']);
+            $this->assertEquals($new_area->uuid, $response_content['area']);
         }
     }
 

@@ -20,22 +20,34 @@ class ShiftsController extends Controller
     static function shiftsFields()
     {
         $base = [
-            'area' => [
-                'type' => 'dropdown',
-                'default' => AreasController::listAreas(),
-            ],
-            'working_time' => [
+            [
+                'name' => 'shift_name',
                 'type' => 'text',
             ],
-            'working_hours' => [
+            [
+                'name' => 'area',
+                'type' => 'dropdown',
+                'options' => Area::query()->withTrashed()
+                    ->whereNull('deleted_at')
+                    ->orWhereIn('id', function ($query) {
+                        $query->select('id')->from((new Shift())->getTable())
+                            ->whereNull('deleted_at');
+                    })->get()->map(function (Area $area) {
+                        return [
+                            'key' => $area->getRouteKey(),
+                            'display_name' => $area->area_name,
+                        ];
+                    }),
+            ],
+            [
+                'name' => 'working_time',
+                'type' => 'text',
+            ],
+            [
+                'name' => 'working_hours',
                 'type' => 'text',
             ],
         ];
-        if (Auth::user()->is_admin)
-            return array_merge(
-                ['shift_name' => ['type' => 'text']],
-                $base
-            );
         return $base;
     }
 
@@ -48,7 +60,8 @@ class ShiftsController extends Controller
             static::shiftsFields(),
             Auth::user()->is_admin,
             Auth::user()->is_admin,
-            'shift_name',
+            'uuid',
+            'shifts.show',
             Auth::user()->is_admin ? 'shifts.store' : null,
             Auth::user()->is_admin ? 'shifts.update' : null,
             Auth::user()->is_admin ? 'shifts.destroy' : null
@@ -60,7 +73,8 @@ class ShiftsController extends Controller
         return EditTable::singleRow(
             $shift,
             static::shiftsFields(),
-            'shift_name',
+            'uuid',
+            'shifts.show',
             Auth::user()->is_admin ? 'shifts.update' : null,
             Auth::user()->is_admin ? 'shifts.destroy' : null
         );
@@ -96,18 +110,11 @@ class ShiftsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'shift_name' => ['required', 'min:1', 'max:255'],
-            'area.selected' => ['required', 'exists:areas,uuid'],
-        ])->setAttributeNames([
-            'area.selected' => 
-                Lang::get('validation.attributes.area_name'),
+            'area' => ['required', 'exists:areas,uuid'],
         ]);
 
         if ($validator->fails())
-            return response()->json(array_rename_key(
-                $validator->messages()->toArray(),
-                'area.selected',
-                'area'
-            ), 400);
+            return response()->json($validator->messages(), 400);
 
         $fields = $request->only([
             'shift_name',
@@ -115,7 +122,6 @@ class ShiftsController extends Controller
             'working_time',
             'working_hours',
         ]);
-        $fields['area'] = $fields['area']['selected'];
         $fields['area_id'] = Area::where('uuid', $fields['area'])->first()->id;
 
         $shift = Shift::create($fields);
@@ -157,27 +163,18 @@ class ShiftsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'shift_name' => ['min:1', 'max:255'],
-            'area.selected' => ['exists:areas,uuid'],
-        ])->setAttributeNames([
-            'area.selected' => 
-                Lang::get('validation.attributes.area_name'),
+            'area' => ['exists:areas,uuid'],
         ]);
 
         if ($validator->fails())
-            return response()->json(array_rename_key(
-                $validator->messages()->toArray(),
-                'area.selected',
-                'area'
-            ), 400);
+            return response()->json($validator->messages(), 400);
 
         $fields = $request->only([
             'shift_name',
-            'area.selected',
+            'area',
             'working_time',
             'working_hours',
         ]);
-        if (array_key_exists('area', $fields))
-            $fields['area'] = $fields['area']['selected'];
 
         foreach ($fields as $key => $value)
             $shift->$key = $value;

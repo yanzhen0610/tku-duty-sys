@@ -32,9 +32,14 @@ class AreasController extends Controller
     static function areasFields()
     {
         $base = [
-            'responsible_person' => [
+            [
+                'name' => 'area_name',
+                'type' => 'text',
+            ],
+            [
+                'name' => 'responsible_person',
                 'type' => 'dropdown',
-                'default' => User::withTrashed()
+                'options' => User::withTrashed()
                     ->whereNull('deleted_at')
                     ->orWhereIn('id', function ($query) {
                         $query->select('responsible_person_id')->from((new Area())->getTable())
@@ -47,8 +52,6 @@ class AreasController extends Controller
                     }),
             ],
         ];
-        if (Auth::user()->is_admin)
-            return array_merge(['area_name' => ['type' => 'text']], $base);
         return $base;
     }
 
@@ -61,7 +64,8 @@ class AreasController extends Controller
             static::areasFields(),
             Auth::user()->is_admin,
             Auth::user()->is_admin,
-            'area_name',
+            'uuid',
+            'areas.show',
             Auth::user()->is_admin ? 'areas.store' : null,
             Auth::user()->is_admin ? 'areas.update' : null,
             Auth::user()->is_admin ? 'areas.destroy' : null
@@ -73,7 +77,8 @@ class AreasController extends Controller
         return EditTable::singleRow(
             $area,
             static::areasFields(),
-            'area_name',
+            'uuid',
+            'areas.show',
             Auth::user()->is_admin ? 'areas.update' : null,
             Auth::user()->is_admin ? 'areas.destroy' : null
         );
@@ -109,20 +114,13 @@ class AreasController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'area_name' => ['required', 'min:1', 'max:255'],
-            'responsible_person.selected' => ['required', 'exists:users,username'],
-        ])->setAttributeNames([
-            'responsible_person.selected' =>
-                Lang::get('validation.attributes.responsible_person'),
+            'responsible_person' => ['required', 'exists:users,username'],
         ]);
+
         if ($validator->fails())
-            return response()->json(array_rename_key(
-                $validator->messages()->toArray(),
-                'responsible_person.selected',
-                'responsible_person'
-            ), 400);
+            return response()->json($validator->messages(), 400);
 
         $fields = $request->only(['area_name', 'responsible_person']);
-        $fields['responsible_person'] = $fields['responsible_person']['selected'];
         $fields['responsible_person_id'] = User::where(
             'username',
             $fields['responsible_person']
@@ -167,22 +165,13 @@ class AreasController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'area_name' => ['min:1', 'max:255'],
-            'responsible_person.selected' => ['exists:users,username'],
-        ])->setAttributeNames([
-            'responsible_person.selected' =>
-                Lang::get('validation.attributes.responsible_person'),
+            'responsible_person' => ['exists:users,username'],
         ]);
-        if ($validator->fails())
-            return response()->json(array_rename_key(
-                $validator->messages()->toArray(),
-                'responsible_person.selected',
-                'responsible_person'
-            ), 400);
 
-        $fields = $request->only(['area_name', 'responsible_person.selected']);
-        if (array_key_exists('responsible_person', $fields))
-            $fields['responsible_person'] =
-                $fields['responsible_person']['selected'];
+        if ($validator->fails())
+            return response()->json($validator->messages(), 400);
+
+        $fields = $request->only(['area_name', 'responsible_person']);
 
         foreach ($fields as $key => $value)
             $area->$key = $value;

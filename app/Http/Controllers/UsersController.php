@@ -19,17 +19,36 @@ class UsersController extends Controller
     }
 
     private static $usersFields = [
-        'display_name' => ['type' => 'text'],
-        'mobile_ext' => ['type' => 'text'],
-        'is_disabled' => ['type' => 'checkbox'],
-        'is_admin' => ['type' => 'checkbox'],
+        [
+            'name' => 'username',
+            'type' => 'text',
+        ],
+        [
+            'name' => 'display_name',
+            'type' => 'text'
+        ],
+        [
+            'name' => 'mobile_ext',
+            'type' => 'text'
+        ],
+        [
+            'name' => 'is_disabled',
+            'type' => 'checkbox'
+        ],
+        [
+            'name' => 'is_admin',
+            'type' => 'checkbox'
+        ],
     ];
 
     static function usersFields()
     {
         if (Auth::user()->is_admin)
             return array_merge(static::$usersFields, [
-                'reset_password' => ['type' => 'button-popup-window']
+                [
+                    'name' => 'reset_password',
+                    'type' => 'button-popup-window',
+                ]
             ]);
         return static::$usersFields;
     }
@@ -39,17 +58,16 @@ class UsersController extends Controller
         $fields = $user->toArray();
         foreach (static::usersFields() as $key => $value)
             if ($value['type'] != 'button-popup-window')
-                $fields[$key] = $user->$key;
+                $fields[$value['name']] = $user->{$value['name']};
         if (Auth::user()->is_admin)
         {
+            $fields['show_url'] = route('users.show', $user->username);
             $fields['update_url'] = route('users.update', $user->username);
             $fields['destroy_url'] = route('users.destroy', $user->username);
-            $fields['reset_password'] = [
-                'url' => $user->status == User::$STATUS_RESET_PASSWORD_REQUESTED
-                    ? route('admin.changeUserPassword', $user->username) : null,
-            ];
+            $fields['reset_password'] = $user->status == User::$STATUS_RESET_PASSWORD_REQUESTED
+                ? route('admin.changeUserPassword', $user->username) : null;
         }
-        $fields['key'] = $user->username;
+        $fields['username'] = $user->username;
         return $fields;
     }
 

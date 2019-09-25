@@ -61,7 +61,7 @@ class APIAreasTest extends TestCase
             $this->assertArrayHasKey('area_name', $response_content);
             $this->assertArrayHasKey('responsible_person', $response_content);
             $this->assertEquals($area->area_name, $response_content['area_name']);
-            $this->assertEquals($area->responsible_person->username, $response_content['responsible_person']['selected']);
+            $this->assertEquals($area->responsible_person->username, $response_content['responsible_person']);
         }
     }
 
@@ -80,9 +80,7 @@ class APIAreasTest extends TestCase
             $this->startQueryLog();
             $response = $this->post('/areas', [
                 'area_name' => $area_name,
-                'responsible_person' => [
-                    'selected' => $responsible_person->username,
-                ]
+                'responsible_person' => $responsible_person->username,
             ]);
             $this->endQueryLog(5);
 
@@ -92,7 +90,7 @@ class APIAreasTest extends TestCase
             $this->assertArrayHasKey('area_name', $response_content);
             $this->assertArrayHasKey('responsible_person', $response_content);
             $this->assertEquals($area_name, $response_content['area_name']);
-            $this->assertEquals($responsible_person->username, $response_content['responsible_person']['selected']);
+            $this->assertEquals($responsible_person->username, $response_content['responsible_person']);
             $uuid = $response_content['uuid'];
 
             
@@ -107,7 +105,7 @@ class APIAreasTest extends TestCase
             $this->assertArrayHasKey('responsible_person', $response_content);
             $this->assertEquals($uuid, $response_content['uuid']);
             $this->assertEquals($area_name, $response_content['area_name']);
-            $this->assertEquals($responsible_person->username, $response_content['responsible_person']['selected']);
+            $this->assertEquals($responsible_person->username, $response_content['responsible_person']);
         }
     }
 
@@ -130,7 +128,7 @@ class APIAreasTest extends TestCase
             $this->assertArrayHasKey('area_name', $response_content);
             $this->assertArrayHasKey('responsible_person', $response_content);
             $this->assertEquals($area->area_name, $response_content['area_name']);
-            $this->assertEquals($area->responsible_person->username, $response_content['responsible_person']['selected']);
+            $this->assertEquals($area->responsible_person->username, $response_content['responsible_person']);
             $uuid = $response_content['uuid'];
 
 
@@ -140,9 +138,7 @@ class APIAreasTest extends TestCase
             $this->startQueryLog();
             $response = $this->patch('/areas/'.$uuid, [
                 'area_name' => $new_area_name,
-                'responsible_person' => [
-                    'selected' => $new_responsible_person->username,
-                ]
+                'responsible_person' => $new_responsible_person->username,
             ]);
             $this->endQueryLog(6);
 
@@ -152,7 +148,7 @@ class APIAreasTest extends TestCase
             $this->assertArrayHasKey('area_name', $response_content);
             $this->assertArrayHasKey('responsible_person', $response_content);
             $this->assertEquals($new_area_name, $response_content['area_name']);
-            $this->assertEquals($new_responsible_person->username, $response_content['responsible_person']['selected']);
+            $this->assertEquals($new_responsible_person->username, $response_content['responsible_person']);
             $uuid = $response_content['uuid'];
 
             
@@ -167,7 +163,7 @@ class APIAreasTest extends TestCase
             $this->assertArrayHasKey('responsible_person', $response_content);
             $this->assertEquals($uuid, $response_content['uuid']);
             $this->assertEquals($new_area_name, $response_content['area_name']);
-            $this->assertEquals($new_responsible_person->username, $response_content['responsible_person']['selected']);
+            $this->assertEquals($new_responsible_person->username, $response_content['responsible_person']);
         }
     }
 

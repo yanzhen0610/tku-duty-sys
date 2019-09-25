@@ -9,14 +9,15 @@ class EditTable implements Responsable
 {
     public function __construct(iterable $rows, iterable $fields,
         bool $editable, bool $destroyable, string $primary_key,
-        ?string $store_route_name, ?string $update_route_name,
-        ?string $destroy_route_name)
+        ?string $show_route_name, ?string $store_route_name,
+        ?string $update_route_name, ?string $destroy_route_name)
     {
         $this->rows = $rows;
         $this->fields = $fields;
         $this->editable = $editable;
         $this->destroyable = $destroyable;
         $this->primary_key = $primary_key;
+        $this->show_route_name = $show_route_name;
         $this->store_route_name = $store_route_name;
         $this->update_route_name = $update_route_name;
         $this->destroy_route_name = $destroy_route_name;
@@ -33,6 +34,7 @@ class EditTable implements Responsable
 
     public static function singleRow($row, iterable $fields,
         string $primary_key,
+        string $show_route_name = null,
         string $update_route_name = null,
         string $destroy_route_name = null)
     {
@@ -43,20 +45,20 @@ class EditTable implements Responsable
         else if (is_array($row))
             $array_row = array_merge($array_row, $row);
 
-        foreach ($fields as $key => $value)
-            switch ($value['type'])
+        foreach ($fields as $key => $field)
+            switch ($field['type'])
             {
                 case 'dropdown':
-                    $array_row[$key] = [
-                        'selected' => $row->$key->getRouteKey(),
-                    ];
+                    $array_row[$field['name']] = $row[$field['name']]->getRouteKey();
                     break;
                 default:
-                    $array_row[$key] = $row[$key];
+                    $array_row[$field['name']] = $row[$field['name']];
                     break;
             }
 
-        $array_row['key'] = $row[$primary_key];
+        $array_row[$primary_key] = $row[$primary_key];
+        $array_row['show_url'] = $show_route_name != null ?
+            route($show_route_name, $row) : null;
         $array_row['update_url'] = $update_route_name != null ?
             route($update_route_name, $row) : null;
         $array_row['destroy_url'] = $destroy_route_name != null ?
@@ -71,6 +73,7 @@ class EditTable implements Responsable
             $row,
             $this->fields,
             $this->primary_key,
+            $this->show_route_name,
             $this->update_route_name,
             $this->destroy_route_name
         );

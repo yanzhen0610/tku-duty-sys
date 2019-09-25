@@ -23,7 +23,7 @@ import Vuex from 'vuex';
 
 Vue.use(Vuex);
 
-Vue.component('edit-table', require('./components/EditTable.vue').default);
+Vue.component('edit-table', require('./edit-table/EditTable.vue').default);
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
@@ -31,23 +31,50 @@ Vue.component('edit-table', require('./components/EditTable.vue').default);
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
-window.make_edit_table = function (el, data) {
-    data.rows.forEach((v, i) => v.editTableRowIndex = i);
+window.make_edit_table = function (el, edit_table_data) {
+    // don't manipulate the input data
+    const data = JSON.parse(JSON.stringify(edit_table_data));
+    // preprocess data
+    data.rows.forEach((value, index, array) => array[index] = {
+        // for the `v-for` binding key
+        id: index,
+        // the original data
+        row_data: value,
+    });
+
     const store = new Vuex.Store({
         state: {
+            // expanded data
             ...data,
-            rowsLastId: data.rows.length,
-            ajax(_method, url, handler, args) {
-                const _token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            // ID for new row
+            next_id: data.rows.length,
+            /**
+             * request function
+             * the caller should not use the fields `_method` and `_token`
+             * @param {String} method request method
+             * @param {String} url request url
+             * @param {Function} handler handler that passed to onreadystatechange
+             * @param {Object} args request arguments
+             */
+            ajax(method, url, handler, args) {
+                // get the CSRF token from the metadata
+                const csrf_token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                 const request = new XMLHttpRequest();
 
+                // set the handler
                 request.onreadystatechange = handler;
+                // use POST method to send JSON data
                 request.open('POST', url, true);
+                // set the request `content-type` header
                 request.setRequestHeader('Content-Type', 'application/json');
+                // send the request here
                 request.send(JSON.stringify({
-                    _method,
-                    _token,
+                    // expanded the request arguments
                     ...args,
+                    // CSRF token
+                    _token: csrf_token,
+                    // the real request method
+                    _method: method,
                 }));
             },
         },
@@ -61,17 +88,26 @@ window.make_edit_table = function (el, data) {
             primary_key: (state) => state.primary_key,
         },
         mutations: {
-            createNewRow(state) {
-                state.rows.push({editTableRowIndex: state.rowsLastId++, key: undefined, created: true});
+            create_new_row(state) {
+                state.rows.push({
+                    id: state.next_id++,
+                    row_data: new Object(),
+                });
             },
-            updateRowData(state, data) {
-                Vue.set(state.rows, data.key, {...state.rows[data.key], ...data.newRowData});
+            update_row_data(state, args) {
+                Vue.set(state.rows, args.index, {
+                    // the original data
+                    ...state.rows[args.index],
+                    // overwrite them by keys
+                    ...args.new_row_data,
+                });
             },
-            removeRow(state, index) {
+            remove_row(state, index) {
                 delete state.rows.splice(index, 1);
             },
         },
     });
+
     return new Vue({
         el: el,
         store: store,

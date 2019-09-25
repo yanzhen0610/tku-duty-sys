@@ -71,14 +71,13 @@ class APIUsersTest extends TestCase
 
             $response->assertStatus(200);
             $response_content = json_decode($response->content(), true);
-            $this->assertArrayHasKey('key', $response_content);
+
             $this->assertArrayHasKey('username', $response_content);
             $this->assertArrayHasKey('display_name', $response_content);
             $this->assertArrayHasKey('mobile_ext', $response_content);
             $this->assertArrayHasKey('is_admin', $response_content);
             $this->assertArrayHasKey('is_disabled', $response_content);
             $this->assertArrayHasKey('reset_password', $response_content);
-            $this->assertArrayHasKey('url', $response_content['reset_password']);
             $this->assertArrayHasKey('update_url', $response_content);
             $this->assertArrayHasKey('update_url', $response_content);
             $this->assertArrayHasKey('destroy_url', $response_content);
@@ -110,7 +109,7 @@ class APIUsersTest extends TestCase
 
             $response->assertStatus(200);
             $response_content = json_decode($response->content(), true);
-            $this->assertEquals($user->username, $response_content['key']);
+            $this->assertEquals($user->username, $response_content['username']);
             $this->assertEquals($user->display_name, $response_content['display_name']);
             $this->assertEquals($user->mobile_ext, $response_content['mobile_ext']);
             $this->assertEquals($user->is_admin, $response_content['is_admin']);
@@ -133,7 +132,7 @@ class APIUsersTest extends TestCase
 
             $response->assertStatus(200);
             $response_content = json_decode($response->content(), true);
-            $this->assertEquals($user->username, $response_content['key']);
+            $this->assertEquals($user->username, $response_content['username']);
             $this->assertEquals($new_display_name, $response_content['display_name']);
             $this->assertEquals($new_mobile_ext, $response_content['mobile_ext']);
             $this->assertEquals($new_is_admin, $response_content['is_admin']);
@@ -162,7 +161,7 @@ class APIUsersTest extends TestCase
 
             $response->assertStatus(200);
             $response_content = json_decode($response->content(), true);
-            $this->assertEquals($user->username, $response_content['key']);
+            $this->assertEquals($user->username, $response_content['username']);
             $this->assertEquals($user->display_name, $response_content['display_name']);
             $this->assertEquals($user->mobile_ext, $response_content['mobile_ext']);
             $this->assertEquals($user->is_admin, $response_content['is_admin']);
@@ -208,7 +207,7 @@ class APIUsersTest extends TestCase
 
             $response->assertStatus(200);
             $response_content = json_decode($response->content(), true);
-            $this->assertEquals($username, $response_content['key']);
+            $this->assertEquals($username, $response_content['username']);
             $this->assertEquals($display_name, $response_content['display_name']);
             $this->assertEquals($mobile_ext, $response_content['mobile_ext']);
             $this->assertEquals($is_admin, $response_content['is_admin']);
@@ -221,7 +220,7 @@ class APIUsersTest extends TestCase
 
             $response->assertStatus(200);
             $response_content = json_decode($response->content(), true);
-            $this->assertEquals($username, $response_content['key']);
+            $this->assertEquals($username, $response_content['username']);
             $this->assertEquals($display_name, $response_content['display_name']);
             $this->assertEquals($mobile_ext, $response_content['mobile_ext']);
             $this->assertEquals($is_admin, $response_content['is_admin']);
