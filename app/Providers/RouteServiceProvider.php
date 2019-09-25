@@ -32,7 +32,7 @@ class RouteServiceProvider extends ServiceProvider
         {
             $app_url = env('APP_URL');
             $parsed_url = parse_url($app_url);
-            if (array_has($parsed_url, 'scheme') && $parsed_url['scheme'] == 'https')
+            if (array_key_exists('scheme', $parsed_url) && $parsed_url['scheme'] == 'https')
             {
                 URL::forceScheme('https');
             }

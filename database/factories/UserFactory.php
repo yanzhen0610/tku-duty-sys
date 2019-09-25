@@ -2,6 +2,7 @@
 
 use Faker\Generator as Faker;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,6 @@ $factory->define(App\User::class, function (Faker $faker) {
         'email_verified_at' => now(),
         'password' => Hash::make('password'), // secret
         'mobile_ext' => $faker->phoneNumber,
-        'remember_token' => str_random(10),
+        'remember_token' => Str::random(10),
     ];
 });

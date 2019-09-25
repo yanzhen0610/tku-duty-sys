@@ -51,13 +51,13 @@ FROM alpine:3.10
 
 ################################################################################
 #
-# Nginx 1.17.3
+# Nginx 1.17.4
 # modified from:
-# https://github.com/nginxinc/docker-nginx/blob/e3bbc1131a683dabf868268e62b9d3fbd250191b/mainline/alpine/Dockerfile
+# https://github.com/nginxinc/docker-nginx/blob/23a990403d6dbe102bf2c72ab2f6a239e940e3c3/mainline/alpine/Dockerfile
 #
 ################################################################################
 
-ENV NGINX_VERSION 1.17.3
+ENV NGINX_VERSION 1.17.4
 ENV NJS_VERSION   0.3.5
 ENV PKG_RELEASE   1
 
