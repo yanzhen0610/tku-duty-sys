@@ -43,6 +43,9 @@ class PagesController extends Controller
         $to_date = now()->addDays(30)->endOfWeek(Carbon::SATURDAY)->toDateString();
 
         $areas = Area::with('shifts_eager')->get();
+        $areas->each(function (Area $area) {
+            $area->setAppends(['shifts']);
+        });
         $is_admin = Auth::check() && (Auth::user()->is_admin || $areas->contains(function ($value, $key) {
             return $value->responsible_person_id == Auth::user()->id;
         }));
