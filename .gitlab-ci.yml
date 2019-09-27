@@ -139,7 +139,7 @@ test:
   services:
     - name: mysql:5.7
       alias: mysql
-    - name: redis:latest
+    - name: redis:alpine
       alias: redis
   variables:
     # Pull Git submodules
