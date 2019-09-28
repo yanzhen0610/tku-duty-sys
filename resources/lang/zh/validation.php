@@ -145,6 +145,7 @@ return [
     */
 
     'attributes' => [
+        'area' => '區域',
         'username' => '帳號',
         'display_name' => '名稱',
         'mobile_ext' => '手機/分機',
