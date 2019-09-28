@@ -10,7 +10,6 @@
 
     <title>@lang('admin.change_user_password_page_title')</title>
     <link rel="stylesheet" href="{{ url(mix('css/bulma.css')) }}">
-    <link rel="stylesheet" href="{{ url(mix('css/materialize/checkboxes.css')) }}">
     <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 
     @if (session('status'))

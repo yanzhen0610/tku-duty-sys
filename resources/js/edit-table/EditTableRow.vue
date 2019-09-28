@@ -150,7 +150,7 @@ export default {
         if (original != current)
           return true;
       }
-      return false;
+      return !this.exists;
     },
     exists() {
       return this.row_data[this.primary_key] != undefined;
@@ -162,7 +162,7 @@ export default {
       return !this.requesting && this.unsaved;
     },
     can_destroy() {
-      return !this.requesting;
+      return this.destroy_url && !this.requesting;
     },
   },
   methods: {

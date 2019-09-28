@@ -15,7 +15,6 @@ mix.js('resources/js/app.js', 'public/js')
    .sass('resources/sass/app.scss', 'public/css');
 
 mix.sass('resources/sass/bulma/bulma.sass', 'public/css').version();
-mix.sass('resources/sass/checkboxes.scss', 'public/css/materialize').version();
 
 mix.js('resources/js/edit-table.js', 'public/js').version();
 mix.js('resources/js/shifts-arrangements.js', 'public/js').version();

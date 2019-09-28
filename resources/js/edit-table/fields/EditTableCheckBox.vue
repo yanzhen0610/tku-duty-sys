@@ -8,9 +8,21 @@
             v-model="data.data"
             type="checkbox"
             onclick="return false">
-        <span></span>
+        <span
+            v-bind:class="{
+                'cursor-default': !editable,
+            }"
+        ></span>
     </label>
 </template>
+
+<style scoped lang="scss">
+@import '../../../sass/checkboxes.scss';
+
+input[type=checkbox] + .cursor-default {
+    cursor: default;
+}
+</style>
 
 <script>
 export default {

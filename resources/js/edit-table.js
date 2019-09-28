@@ -44,10 +44,30 @@ window.make_edit_table = function (el, edit_table_data) {
 
     const store = new Vuex.Store({
         state: {
-            // expanded data
-            ...data,
+            // read only or editable
+            editable: data.editable,
+
+            // show delete button
+            destroyable: data.destroyable,
+
+            // show create button and allow to send create request
+            create_url: data.create_url,
+
+            // to determine is row exists in database
+            primary_key: data.primary_key,
+
+            // fields for showing
+            fields: data.fields,
+
+            // rows of data
+            rows: data.rows,
+
+            // lang
+            ui_i18n: data.ui_i18n,
+
             // ID for new row
             next_id: data.rows.length,
+
             /**
              * request function
              * the caller should not use the fields `_method` and `_token`
