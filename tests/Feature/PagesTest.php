@@ -235,7 +235,7 @@ class PagesTest extends TestCase
 
         $response = $this->actingAs($user)
             ->get('/admin/change_user_password/'.'admin');
-        $response->assertStatus(302);
+        $response->assertStatus(404);
 
         $this->endQueryLog(2);
     }
