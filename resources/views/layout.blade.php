@@ -18,11 +18,11 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', isset($title) ? $title : config('app.name'))</title>
+    <title>@yield('title', $title ?? config('app.name', __('ui.app_name')))</title>
     @includeFirst(['default-fonts-'.Config::get('app.locale'), 'default-fonts-zh'])
     <link rel="stylesheet" href="{{ url(mix('css/bulma.css')) }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
-        integrity="sha256-UzFD2WYH2U1dQpKDjjZK72VtPeWP50NoJjd26rnAdUI=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.min.css"
+        integrity="sha256-+N4/V/SbAFiW1MPBCXnfnP9QSN3+Keu+NlB+0ev/YKQ=" crossorigin="anonymous" />
     @stack('headers')
 </head>
 
