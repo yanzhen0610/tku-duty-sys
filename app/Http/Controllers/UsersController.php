@@ -48,6 +48,10 @@ class UsersController extends Controller
                 [
                     'name' => 'reset_password',
                     'type' => 'button-popup-window',
+                    'url_getter' => function (User $user, $key = null) {
+                        return $user->status == User::$STATUS_RESET_PASSWORD_REQUESTED
+                            ? route('admin.changeUserPassword', $user->username) : null;
+                    },
                 ]
             ]);
         return static::$usersFields;

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\User;
+use App\ReCAPTCHA;
 use App\Events\ResetPasswordRequested;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
@@ -47,7 +48,29 @@ class ForgotPasswordController extends Controller
     {
         $request->validate([
             'username' => ['required'],
+            'reCAPTCHA_v3_token' => [],
+            'reCAPTCHA_v2_token' => [],
         ]);
+
+        if (ReCAPTCHA::v3Available())
+        {
+            $result = ReCAPTCHA::v3Verify($request->input('reCAPTCHA_v3_token'), $request->ip());
+            abort_if(!$result, 500);
+            if (!$result->success)
+            {
+                return back()->with('error_message', __('recaptcha.v3_verification_failed'));
+            }
+        }
+
+        if (ReCAPTCHA::v2Available())
+        {
+            $result = ReCAPTCHA::v2Verify($request->input('reCAPTCHA_v2_token'), $request->ip());
+            abort_if(!$result, 500);
+            if (!$result->success)
+            {
+                return back()->with('error_message', __('recaptcha.v2_checkbox_verification_failed'));
+            }
+        }
 
         if ($user = User::where('username', $request->input('username'))->first())
         {

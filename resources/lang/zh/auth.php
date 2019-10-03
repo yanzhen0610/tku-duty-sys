@@ -14,6 +14,6 @@ return [
     */
 
     'failed' => '帳號或密碼錯誤',
-    'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
+    'throttle' => '嘗試次數過多，請在 :seconds 秒後嘗試。',
 
 ];
