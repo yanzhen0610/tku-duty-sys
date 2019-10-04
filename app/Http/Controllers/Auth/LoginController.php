@@ -103,6 +103,20 @@ class LoginController extends Controller
         return $this->sendFailedLoginResponse($request);
     }
 
+    /**
+     * Send the response after the user was authenticated.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    protected function sendLoginResponse(Request $request)
+    {
+        $request->session()->regenerate();
+
+        return $this->authenticated($request, $this->guard()->user())
+                ?: redirect()->intended($this->redirectPath());
+    }
+
     protected function verifyV2Checkbox(Request $request)
     {
         if (ReCAPTCHA::v2Available() && $this->hasTooManyLoginAttempts($request))
