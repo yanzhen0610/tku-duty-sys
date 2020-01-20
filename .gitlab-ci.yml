@@ -37,21 +37,23 @@ build_docker_image:
   before_script:
     - docker info
   script:
-    - export DOCKER_IMAGE_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}"
-    - export DOCKER_IMAGE_SHORT_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHORT_SHA}"
-    - export DOCKER_IMAGE_BRANCH_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:$(echo ${CI_COMMIT_REF_NAME} | tr '[:upper:]' '[:lower:]' | sed 's/[^-.0-9A-Z_a-z]/-/g')"
+    - export DOCKER_IMAGE_TAG_NAME="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+    - export DOCKER_IMAGE_SHORT_TAG_NAME="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+    - export DOCKER_IMAGE_BRANCH_TAG_NAME="${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}"
     - export DOCKERFILE='./docker/Dockerfile'
     - export DOCKER_BUILD_PATH='.'
     - echo ${DOCKER_IMAGE_TAG_NAME}
     - echo ${DOCKER_IMAGE_SHORT_TAG_NAME}
     - echo ${DOCKER_IMAGE_BRANCH_TAG_NAME}
-    - >
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    - |
       if docker pull "${DOCKER_IMAGE_TAG_NAME}";
       then
         docker tag "${DOCKER_IMAGE_TAG_NAME}" "${DOCKER_IMAGE_BRANCH_TAG_NAME}";
       else
         docker pull "${DOCKER_IMAGE_BRANCH_TAG_NAME}" || true;
         docker build --build-arg commit="${CI_COMMIT_SHA}" --cache-from "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --tag "${DOCKER_IMAGE_TAG_NAME}" --tag "${DOCKER_IMAGE_SHORT_TAG_NAME}" --tag "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --file "${DOCKERFILE}" "${DOCKER_BUILD_PATH}";
+        docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY};
         docker push ${DOCKER_IMAGE_TAG_NAME};
         docker push ${DOCKER_IMAGE_SHORT_TAG_NAME};
       fi
@@ -87,21 +89,23 @@ build_docker_dev_image:
   before_script:
     - docker info
   script:
-    - export DOCKER_IMAGE_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}-dev"
-    - export DOCKER_IMAGE_SHORT_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHORT_SHA}-dev"
-    - export DOCKER_IMAGE_BRANCH_TAG_NAME="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:$(echo ${CI_COMMIT_REF_NAME} | tr '[:upper:]' '[:lower:]' | sed 's/[^-.0-9A-Z_a-z]/-/g')-dev"
+    - export DOCKER_IMAGE_TAG_NAME="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}-dev"
+    - export DOCKER_IMAGE_SHORT_TAG_NAME="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}-dev"
+    - export DOCKER_IMAGE_BRANCH_TAG_NAME="${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}-dev"
     - export DOCKERFILE='./docker/dev.dockerfile'
     - export DOCKER_BUILD_PATH='./docker/'
     - echo ${DOCKER_IMAGE_TAG_NAME}
     - echo ${DOCKER_IMAGE_SHORT_TAG_NAME}
     - echo ${DOCKER_IMAGE_BRANCH_TAG_NAME}
-    - >
+    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    - |
       if docker pull "${DOCKER_IMAGE_TAG_NAME}";
       then
         docker tag "${DOCKER_IMAGE_TAG_NAME}" "${DOCKER_IMAGE_BRANCH_TAG_NAME}";
       else
         docker pull "${DOCKER_IMAGE_BRANCH_TAG_NAME}" || true;
         docker build --cache-from "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --tag "${DOCKER_IMAGE_TAG_NAME}" --tag "${DOCKER_IMAGE_SHORT_TAG_NAME}" --tag "${DOCKER_IMAGE_BRANCH_TAG_NAME}" --file "${DOCKERFILE}" "${DOCKER_BUILD_PATH}";
+        docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY};
         docker push ${DOCKER_IMAGE_TAG_NAME};
         docker push ${DOCKER_IMAGE_SHORT_TAG_NAME};
       fi
@@ -121,11 +125,11 @@ sentry_releases:
 
 test:
   stage: test
-  needs: 
+  needs:
     - build_docker_dev_image
   # Official framework image. Look for the different tagged releases at:
   # https://hub.docker.com/r/library/php
-  image: ${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}-dev
+  image: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}-dev
   # This folder is cached between builds
   # http://docs.gitlab.com/ce/ci/yaml/README.html#cache
   cache:
@@ -208,13 +212,13 @@ deploy_staging:
     - chmod 600 ~/.ssh/id_rsa
     - echo "${TKU_AGOX_SSH_KEY_PUB}" >~/.ssh/id_rsa.pub
     - echo "${TKU_AGOX_SSH_KNOWN_HOST}" >>~/.ssh/known_hosts
-    - export DOCKER_IMAGE="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}"
+    - export DOCKER_IMAGE="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
     - echo "${DOCKER_IMAGE}"
     - eval ssh "${TKU_AGOX_SSH_USER}@${TKU_AGOX_HOST}" "${TKU_AGOX_STAGING_DEPLOY_SCRIPT}"
 
 deploy_full_time:
   stage: deploy
-  needs: 
+  needs:
     - build_docker_image
     - test
   image: buildpack-deps:stable
@@ -229,13 +233,13 @@ deploy_full_time:
     - chmod 600 ~/.ssh/id_rsa
     - echo "${TKU_AGOX_SSH_KEY_PUB}" >~/.ssh/id_rsa.pub
     - echo "${TKU_AGOX_SSH_KNOWN_HOST}" >>~/.ssh/known_hosts
-    - export DOCKER_IMAGE="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}"
+    - export DOCKER_IMAGE="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
     - echo "${DOCKER_IMAGE}"
     - eval ssh "${TKU_AGOX_SSH_USER}@${TKU_AGOX_HOST}" "${TKU_AGOX_FULL_TIME_DEPLOY_SCRIPT}"
 
 deploy_part_time:
   stage: deploy
-  needs: 
+  needs:
     - build_docker_image
     - test
   image: buildpack-deps:stable
@@ -250,7 +254,7 @@ deploy_part_time:
     - chmod 600 ~/.ssh/id_rsa
     - echo "${TKU_AGOX_SSH_KEY_PUB}" >~/.ssh/id_rsa.pub
     - echo "${TKU_AGOX_SSH_KNOWN_HOST}" >>~/.ssh/known_hosts
-    - export DOCKER_IMAGE="${DOCKER_REGISTRY}/${CI_PROJECT_NAME}:${CI_COMMIT_SHA}"
+    - export DOCKER_IMAGE="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
     - echo "${DOCKER_IMAGE}"
     - eval ssh "${TKU_AGOX_SSH_USER}@${TKU_AGOX_HOST}" "${TKU_AGOX_PART_TIME_DEPLOY_SCRIPT}"
 
